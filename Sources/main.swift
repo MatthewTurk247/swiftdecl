@@ -4,7 +4,7 @@ import SwiftSyntaxParser
 
 struct SwiftDecl: ParsableCommand {
     @Argument
-    var rawSource: String
+    var source: String
     
     @Flag(help: "Format output as JSON.")
     var json = false // Whether user prefers JSON output
@@ -13,33 +13,33 @@ struct SwiftDecl: ParsableCommand {
     
     func run() throws {
         let visitor = FunctionVisitor(viewMode: .fixedUp)
-        let source = try SyntaxParser.parse(source: rawSource) // try SyntaxParser.parse(source: rawSource + "\n" + rawSource2)
-        guard !source.hasError else { throw InputError.invalidSource } // { throw SwiftSyntax.UnexpectedNodesSyntax }
+        let syntaxTree = try SyntaxParser.parse(source: source)
+        guard !syntaxTree.hasError else { throw InputError.invalidSource } // { throw SwiftSyntax.UnexpectedNodesSyntax }
         
-        visitor.walk(source)
+        visitor.walk(syntaxTree)
         var colorMapping: [Range<String.Index>: ANSI] = [:]
         
         if let attributes = visitor.attributes {
             for attribute in attributes {
-                colorMapping[syntaxSlice(Syntax(attribute), in: rawSource)] = .red
+                colorMapping[syntaxSlice(Syntax(attribute), in: source)] = .red
             }
         }
         if let funcKeyword = visitor.funcKeyword {
-            colorMapping[syntaxSlice(Syntax(funcKeyword), in: rawSource)] = .red
+            colorMapping[syntaxSlice(Syntax(funcKeyword), in: source)] = .red
         }
         if let identifier = visitor.identifier {
-            colorMapping[syntaxSlice(Syntax(identifier), in: rawSource)] = .green
+            colorMapping[syntaxSlice(Syntax(identifier), in: source)] = .green
         }
         if let throwsOrRethrowsKeyword = visitor.throwsOrRethrowsKeyword {
-            colorMapping[syntaxSlice(Syntax(throwsOrRethrowsKeyword), in: rawSource)] = .red
+            colorMapping[syntaxSlice(Syntax(throwsOrRethrowsKeyword), in: source)] = .red
         }
         if let parameterList = visitor.parameterList {
             // Go parameter by parameter
         }
         if let returnType = visitor.returnType {
-            colorMapping[syntaxSlice(Syntax(returnType), in: rawSource)] = .blue
+            colorMapping[syntaxSlice(Syntax(returnType), in: source)] = .blue
         }
-        print(colorize(rawSource, with: colorMapping))
+        print(colorize(source, with: colorMapping))
     }
 }
 
