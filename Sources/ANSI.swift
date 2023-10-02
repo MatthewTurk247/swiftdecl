@@ -15,7 +15,7 @@ enum ANSI: String {
     
     static let reset = "\u{001B}[0m"
     
-    func wrap(_ text: String) -> String {
+    func wrap(_ text: any StringProtocol) -> String {
         return "\(self.rawValue)\(text)\(ANSI.reset)"
     }
 }

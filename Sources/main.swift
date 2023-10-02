@@ -46,21 +46,17 @@ struct SwiftDecl: ParsableCommand {
 // MARK: - Helper Functions
 extension SwiftDecl {
     func colorize(_ text: String, with mappings: [Range<String.Index>: ANSI]) -> String {
-        var result = ""
-        var currentIndex = text.startIndex
-        
+        var result: String = ""
+        var currentIndex: String.Index = text.startIndex
         // Sort the mappings by the starting index to ensure we process them in order.
-        let sortedMappings = mappings.sorted(by: { $0.key.lowerBound < $1.key.lowerBound })
+        let sortedMappings = mappings.sorted { $0.key.lowerBound < $1.key.lowerBound }
         
-        for mapping in sortedMappings {
-            let range = mapping.key
-            let color = mapping.value
-            
+        for (range, color) in sortedMappings {
             // Append the text before the range.
-            result += String(text[currentIndex..<range.lowerBound])
+            result += text[currentIndex..<range.lowerBound]
             
             // Append the colorized text for the range.
-            result += color.wrap(String(text[range]))
+            result += color.wrap(text[range])
             
             // Move the current index to the end of the range.
             currentIndex = range.upperBound
