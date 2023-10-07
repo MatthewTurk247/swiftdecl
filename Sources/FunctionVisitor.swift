@@ -15,39 +15,34 @@ class FunctionVisitor: SyntaxVisitor {
     // Modifiers (optional): These adjust the function's behavior or accessibility, e.g., public, private, static, etc.
     var modifiers: ModifierListSyntax?
     
+    /// Swift functions are declared using the `func` keyword.
     var funcKeyword: TokenSyntax?
     
-    // Function Name: This is the name by which you will call the function. It should be descriptive of what the function does.
+    /// The name by which you will call the function. It should be descriptive of what the function does.
     var identifier: TokenSyntax?
     
-    // Generic Parameters (optional): Enclosed in angle brackets < >, these allow you to make functions that work with any type.
+    /// Enclosed in angle brackets `< >`, these allow you to make functions that work with any type.
     var genericParameterClause: GenericParameterClauseSyntax?
     var genericWhereClause: GenericWhereClauseSyntax?
     
-    /*
-     Parameter List: Enclosed in parentheses (), this is a comma-separated list of zero or more parameters. Each parameter has a:
-
-    Name (optional): For external use when calling the function.
-    Local Name (used within the function body).
-    Type: The data type of the parameter.
-    Default Value (optional): You can provide a default value for a parameter.
-    Variadic Parameter (optional): A parameter that accepts multiple values, denoted by ... after its type.
-     */
+    /// Enclosed in parentheses `()`, this is a comma-separated list of zero or more parameters.
+    ///
+    /// Each parameter may have any of the following properties:
+    /// - Name (optional) for external use when calling the function.
+    /// - Local name, used within the function body.
+    /// - Data type.
+    /// - Default value (optional).
+    /// - Variadic parameter (optional), which accepts multiple values, denoted by `...` after its type.
     var parameterList: FunctionParameterListSyntax?
     var asyncOrReasyncKeyword: TokenSyntax?
-    // Throwing Indicator (optional): If the function can throw an error, you use the throws keyword before the return arrow.
+    /// If the function can throw an error, you use the `throws` keyword before the return arrow to indicate that.
     var throwsOrRethrowsKeyword: TokenSyntax?
-    // Return Type: If a function returns a value, you specify the type of the value after the return arrow.
+    /// If a function returns a value, you specify the type of the value after the return arrow.
     var returnType: TypeSyntax?
     
     /*
      Function Keyword: Every function declaration starts with the func keyword.
-
-     
-
-
      Return Arrow (optional): -> This symbol indicates that the function returns a value.
-
 
      Function Body: Enclosed in braces {}, this is where you write the series of statements that constitute the function's behavior.
 
@@ -76,5 +71,11 @@ class FunctionVisitor: SyntaxVisitor {
         self.returnType = node.signature.output?.returnType
 
         return .visitChildren
+    }
+    
+    func summarize() -> String {
+        let inputVerbiage = parameterList?.summarize() ?? "no external inputs"
+        let outputVerbiage = returnType?.summarize() ?? "execute the function body and return no value"
+        return "Given \(inputVerbiage), \(outputVerbiage)"
     }
 }

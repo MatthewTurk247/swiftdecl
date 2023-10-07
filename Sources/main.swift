@@ -3,7 +3,7 @@ import SwiftSyntax
 import SwiftSyntaxParser
 
 struct SwiftDecl: ParsableCommand {
-    @Argument
+    @Argument(help: "Raw Swift source code or a path to a Swift file.")
     var source: String
     
     @Flag(help: "Format output as JSON.")
@@ -18,26 +18,28 @@ struct SwiftDecl: ParsableCommand {
         
         visitor.walk(syntaxTree)
         var colorMapping: [Range<String.Index>: ANSI] = [:]
+        var highlightMapping: [Range<String.Index>: Tooltip] = [:]
         
         if let attributes = visitor.attributes {
+            print(attributes.summarize())
             for attribute in attributes {
-                colorMapping[syntaxSlice(Syntax(attribute), in: source)] = .red
+                colorMapping[syntaxSlice(attribute, in: source)] = .red
             }
         }
         if let funcKeyword = visitor.funcKeyword {
-            colorMapping[syntaxSlice(Syntax(funcKeyword), in: source)] = .red
+            colorMapping[syntaxSlice(funcKeyword, in: source)] = .red
         }
         if let identifier = visitor.identifier {
-            colorMapping[syntaxSlice(Syntax(identifier), in: source)] = .green
+            colorMapping[syntaxSlice(identifier, in: source)] = .green
         }
         if let throwsOrRethrowsKeyword = visitor.throwsOrRethrowsKeyword {
-            colorMapping[syntaxSlice(Syntax(throwsOrRethrowsKeyword), in: source)] = .red
+            colorMapping[syntaxSlice(throwsOrRethrowsKeyword, in: source)] = .red
         }
         if let parameterList = visitor.parameterList {
             // Go parameter by parameter
         }
         if let returnType = visitor.returnType {
-            colorMapping[syntaxSlice(Syntax(returnType), in: source)] = .blue
+            colorMapping[syntaxSlice(returnType, in: source)] = .blue
         }
         print(colorize(source, with: colorMapping))
     }
@@ -68,13 +70,18 @@ extension SwiftDecl {
         return result
     }
 
-    func syntaxSlice(_ syntax: Syntax, in source: String) -> Range<String.Index> {
-        let startIndex = String.Index(utf16Offset: syntax.positionAfterSkippingLeadingTrivia.utf8Offset, in: source)
-        let endEndIndex = String.Index(utf16Offset: syntax.endPositionBeforeTrailingTrivia.utf8Offset, in: source)
+    func syntaxSlice(_ syntax: some SyntaxProtocol, in text: String) -> Range<String.Index> {
+        let startIndex = String.Index(utf16Offset: syntax.positionAfterSkippingLeadingTrivia.utf8Offset, in: text)
+        let endIndex = String.Index(utf16Offset: syntax.endPositionBeforeTrailingTrivia.utf8Offset, in: text)
         
-        return startIndex..<endEndIndex
+        return startIndex..<endIndex
     }
 }
+
+// Given [params of type whatever], __, __, return
+// Given __, __, __, run the function body and return no value
+
+// possibly
 
 // MARK: - Error Handling
 extension SwiftDecl {
@@ -91,4 +98,4 @@ extension SwiftDecl {
     }
 }
 
-SwiftDecl.main()
+SwiftDecl.main(["@available(macOS 13.0, *) func foo() -> String"])
