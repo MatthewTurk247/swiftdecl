@@ -33,7 +33,7 @@ class FunctionVisitor: SyntaxVisitor {
     /// - Data type.
     /// - Default value (optional).
     /// - Variadic parameter (optional), which accepts multiple values, denoted by `...` after its type.
-    var parameterList: FunctionParameterListSyntax?
+    var parameterList: FunctionParameterListSyntax? // ditto
     var asyncOrReasyncKeyword: TokenSyntax?
     /// If the function can throw an error, you use the `throws` keyword before the return arrow to indicate that.
     var throwsOrRethrowsKeyword: TokenSyntax?
@@ -62,19 +62,68 @@ class FunctionVisitor: SyntaxVisitor {
         self.modifiers = node.modifiers
         self.funcKeyword = node.funcKeyword
         self.identifier = node.identifier
+        
         self.genericParameterClause = node.genericParameterClause
         self.genericWhereClause = node.genericWhereClause
         self.parameterList = node.signature.input.parameterList
         self.asyncOrReasyncKeyword = node.signature.asyncOrReasyncKeyword
         self.throwsOrRethrowsKeyword = node.signature.throwsOrRethrowsKeyword
-        self.returnType = node.signature.output?.returnType
 
+        return .visitChildren
+    }
+    
+    override func visit(_ node: FunctionParameterSyntax) -> SyntaxVisitorContinueKind {
+        /*var result = ""
+        
+        self.externalName = node.firstName
+        self.localName = node.secondName ?? node.firstName
+        self.typeAnnotation = node.type
+        self.defaultArgument = node.defaultArgument*/
+        
+        /*if let externalName = node.firstName?.text,
+           let localName = node.secondName?.text {
+            result += "- \(externalName) (\(localName)): "
+        } else if let localName = node.secondName?.text {
+            result += "- \(localName): "
+        }
+        
+        if let type = node.type {
+            result += "\(type.description)"
+        }
+                
+        // TODO: Handle variadic arguments.
+        
+        if let defaultArg = node.defaultArgument {
+            result += " (Default: \(defaultArg.description))"
+        }
+        
+        result += "\n"*/
+        
+        return .visitChildren // or maybe skip actually
+    }
+    
+    override func visit(_ node: AttributeSyntax) -> SyntaxVisitorContinueKind {
+        // node.argument
+        
+        return .visitChildren
+    }
+    
+    override func visit(_ node: AvailabilityArgumentSyntax) -> SyntaxVisitorContinueKind {
+        
+        return .visitChildren
+    }
+    
+    override func visit(_ node: InOutExprSyntax) -> SyntaxVisitorContinueKind {
+        return .visitChildren
+    }
+        
+    override func visit(_ node: GenericParameterSyntax) -> SyntaxVisitorContinueKind {
         return .visitChildren
     }
     
     func summarize() -> String {
         let inputVerbiage = parameterList?.summarize() ?? "no external inputs"
-        let outputVerbiage = returnType?.summarize() ?? "execute the function body and return no value"
+        let outputVerbiage = /*returnType?.summarize() ??*/ "execute the function body and return no value"
         return "Given \(inputVerbiage), \(outputVerbiage)"
     }
 }

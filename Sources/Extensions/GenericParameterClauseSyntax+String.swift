@@ -13,7 +13,7 @@ extension GenericParameterClauseSyntax {
         let parameters = self.genericParameterList.map { parameter -> String in
             var description = parameter.name.text
             if let inheritedType = parameter.inheritedType {
-                description += ": \(inheritedType.summarize())"
+                description += ": "//\(inheritedType.summarize())"
             }
             return description
         }

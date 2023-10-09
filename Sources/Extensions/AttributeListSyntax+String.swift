@@ -12,15 +12,14 @@ extension AttributeListSyntax {
     func summarize() -> String {
         var result = ""
         
-        for attribute in self {
-            let visitor = AttributeVisitor(viewMode: .fixedUp)
-            visitor.walk(attribute)
-            guard let attributeName = visitor.attributeName else { continue }
-
-            switch attributeName.text {
+        for element in self {
+            let attribute = element.cast(AttributeSyntax.self)
+            // What about AvailabilityEntrySyntax, etc.?
+            // Can we write some explicit code for various kinds of attributes and then have default fallback for everything else? Something like that?
+            switch attribute.attributeName.text {
             case "available":
-                guard let availableArgument = visitor.argument else { break }
-                result += summarizeAvailableAttribute(availableArgument)
+                guard let availableArgument = attribute.argument else { break }
+                result += availableArgument.summarize()
             case "main":
                 result += AttributeVisitor.mainAttribute
                 // Case statements do not fall through by default, so the `break` keyword is not necessary.
@@ -31,23 +30,25 @@ extension AttributeListSyntax {
         
         return result
     }
-    
-    private func summarizeAvailableAttribute(_ argument: AttributeSyntax.Argument) -> String {
-        var description = "@available: Indicates the platform and version on which the declaration is available.\n"
+}
+
+extension AttributeSyntax.Argument {
+    func summarize() -> String {
+        var result = "@available: Indicates the platform and version on which the declaration is available.\n"
         
         // Parse the arguments to extract platform and version details.
-        for token in argument.tokens(viewMode: .fixedUp) {
+        for token in self.tokens(viewMode: .fixedUp) {
             switch token.tokenKind {
             case .identifier(let platform):
-                description += "Platform: \(platform)\n"
+                result += "Platform: \(platform)\n"
             case .integerLiteral(let version), .floatingLiteral(let version):
-                description += "Version: \(version)\n"
+                result += "Version: \(version)\n"
             // Handle other argument types as needed.
             default:
                 break
             }
         }
         
-        return description
+        return result
     }
 }
