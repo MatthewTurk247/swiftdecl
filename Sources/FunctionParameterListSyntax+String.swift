@@ -10,15 +10,38 @@ import SwiftSyntax
 
 extension FunctionParameterListSyntax {
     func summarize() -> String {
-        var result = ""
-        let visitor = ParameterVisitor(viewMode: .fixedUp)
+        var result = "Parameters:\n"
         for parameter in self {
+            let visitor = ParameterVisitor(viewMode: .fixedUp)
             visitor.walk(parameter)
-            guard let localName = visitor.localName else { continue }
-            // what is the recursiveDescription property? how different is it
-            result += localName.text
+            result += summarizeParameter(visitor)
         }
         
         return result
+    }
+    
+    private func summarizeParameter(_ visitor: ParameterVisitor) -> String {
+        var description = ""
+        
+        if let externalName = visitor.externalName?.text,
+           let localName = visitor.localName?.text {
+            description += "- \(externalName) (\(localName)): "
+        } else if let localName = visitor.localName?.text {
+            description += "- \(localName): "
+        }
+        
+        if let type = visitor.typeAnnotation {
+            description += "\(type.description)"
+        }
+                
+        // TODO: Handle variadic arguments.
+        
+        if let defaultArg = visitor.defaultArgument {
+            description += " (Default: \(defaultArg.description))"
+        }
+        
+        description += "\n"
+        
+        return description
     }
 }

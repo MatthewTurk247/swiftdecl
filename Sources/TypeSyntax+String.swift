@@ -10,6 +10,6 @@ import SwiftSyntax
 
 extension TypeSyntax {
     func summarize() -> String {
-        return "" // To be continued
+        return ""
     }
 }

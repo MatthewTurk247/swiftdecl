@@ -37,6 +37,7 @@ struct SwiftDecl: ParsableCommand {
         }
         if let parameterList = visitor.parameterList {
             // Go parameter by parameter
+            print(parameterList.summarize())
         }
         if let returnType = visitor.returnType {
             colorMapping[syntaxSlice(returnType, in: source)] = .blue
@@ -98,4 +99,4 @@ extension SwiftDecl {
     }
 }
 
-SwiftDecl.main(["@available(macOS 13.0, *) func foo() -> String"])
+SwiftDecl.main(["@available(macOS 13.0, *) func foo(name: String, values: Int..., age: Int = 30) -> String"])

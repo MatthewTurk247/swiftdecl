@@ -9,10 +9,10 @@ import Foundation
 import SwiftSyntax
 
 class FunctionVisitor: SyntaxVisitor {
-    // Attributes (optional): Attributes/property wrappers provide more information about the function's behavior or intended use, e.g., @discardableResult.
+    /// Attributes (optional): Attributes/property wrappers provide more information about the function's behavior or intended use, e.g., @discardableResult.
     var attributes: AttributeListSyntax?
 
-    // Modifiers (optional): These adjust the function's behavior or accessibility, e.g., public, private, static, etc.
+    /// Modifiers (optional): These adjust the function's behavior or accessibility (e.g., `public`, `private`, `static`).
     var modifiers: ModifierListSyntax?
     
     /// Swift functions are declared using the `func` keyword.
@@ -58,7 +58,6 @@ class FunctionVisitor: SyntaxVisitor {
      */
    
     override func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
-        // Is there a way to verify that this is a valid declaration before running all the way to completion?
         self.attributes = node.attributes
         self.modifiers = node.modifiers
         self.funcKeyword = node.funcKeyword
