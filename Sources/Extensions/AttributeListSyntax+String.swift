@@ -13,6 +13,16 @@ extension AttributeListSyntax {
         var result = ""
         
         for element in self {
+            /*switch element.kind {
+            case .availabilitySpecList:
+                print("availability")
+            case .customAttribute:
+                print("custom")
+            case .attribute:
+                print("regular/general attribute, I guess")
+            default:
+                break
+            }*/
             let attribute = element.cast(AttributeSyntax.self)
             // What about AvailabilityEntrySyntax, etc.?
             // Can we write some explicit code for various kinds of attributes and then have default fallback for everything else? Something like that?
@@ -21,7 +31,7 @@ extension AttributeListSyntax {
                 guard let availableArgument = attribute.argument else { break }
                 result += availableArgument.summarize()
             case "main":
-                result += AttributeVisitor.mainAttribute
+                result += FunctionVisitor.mainAttribute
                 // Case statements do not fall through by default, so the `break` keyword is not necessary.
             default:
                 result += "Unknown token explanation goes here"

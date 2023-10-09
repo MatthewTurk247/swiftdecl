@@ -56,6 +56,9 @@ class FunctionVisitor: SyntaxVisitor {
      Body
      Async specifier
      */
+    
+    // https://docs.swift.org/swift-book/documentation/the-swift-programming-language/attributes/
+    static let mainAttribute: String = "Indicates the top-level entry point for program flow"
    
     override func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
         self.attributes = node.attributes
@@ -71,45 +74,8 @@ class FunctionVisitor: SyntaxVisitor {
 
         return .visitChildren
     }
-    
-    override func visit(_ node: FunctionParameterSyntax) -> SyntaxVisitorContinueKind {
-        /*var result = ""
-        
-        self.externalName = node.firstName
-        self.localName = node.secondName ?? node.firstName
-        self.typeAnnotation = node.type
-        self.defaultArgument = node.defaultArgument*/
-        
-        /*if let externalName = node.firstName?.text,
-           let localName = node.secondName?.text {
-            result += "- \(externalName) (\(localName)): "
-        } else if let localName = node.secondName?.text {
-            result += "- \(localName): "
-        }
-        
-        if let type = node.type {
-            result += "\(type.description)"
-        }
-                
-        // TODO: Handle variadic arguments.
-        
-        if let defaultArg = node.defaultArgument {
-            result += " (Default: \(defaultArg.description))"
-        }
-        
-        result += "\n"*/
-        
-        return .visitChildren // or maybe skip actually
-    }
-    
-    override func visit(_ node: AttributeSyntax) -> SyntaxVisitorContinueKind {
-        // node.argument
-        
-        return .visitChildren
-    }
-    
+
     override func visit(_ node: AvailabilityArgumentSyntax) -> SyntaxVisitorContinueKind {
-        
         return .visitChildren
     }
     

@@ -16,7 +16,7 @@ extension FunctionParameterListSyntax {
             result += parameter.summarize()
         }
         
-        return result
+        return result // return self.reduce("") { $0 + $1.cast(FunctionParameterSyntax.self).summarize() }
     }
 }
 
