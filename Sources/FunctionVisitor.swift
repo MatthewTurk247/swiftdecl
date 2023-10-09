@@ -71,6 +71,7 @@ class FunctionVisitor: SyntaxVisitor {
         self.parameterList = node.signature.input.parameterList
         self.asyncOrReasyncKeyword = node.signature.asyncOrReasyncKeyword
         self.throwsOrRethrowsKeyword = node.signature.throwsOrRethrowsKeyword
+        self.returnType = node.signature.output?.returnType
 
         return .visitChildren
     }
@@ -88,8 +89,16 @@ class FunctionVisitor: SyntaxVisitor {
     }
     
     func summarize() -> String {
+        var result = "Given "
         let inputVerbiage = parameterList?.summarize() ?? "no external inputs"
-        let outputVerbiage = /*returnType?.summarize() ??*/ "execute the function body and return no value"
-        return "Given \(inputVerbiage), \(outputVerbiage)"
+        result += inputVerbiage
+        
+        if let returnTypeDescription = returnType?.description {
+            result += "return \(returnTypeDescription)"
+        } else {
+            result += "execute the function body and return no value"
+        }
+        
+        return result
     }
 }

@@ -43,6 +43,7 @@ struct SwiftDecl: ParsableCommand {
             colorMapping[syntaxSlice(returnType, in: source)] = .blue
         }
         print(colorize(source, with: colorMapping))
+        print(visitor.summarize())
     }
 }
 
