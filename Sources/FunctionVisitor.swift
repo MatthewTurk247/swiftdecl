@@ -59,7 +59,7 @@ class FunctionVisitor: SyntaxVisitor {
     
     // https://docs.swift.org/swift-book/documentation/the-swift-programming-language/attributes/
     static let mainAttribute: String = "Indicates the top-level entry point for program flow"
-   
+    
     override func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
         self.attributes = node.attributes
         self.modifiers = node.modifiers
@@ -89,6 +89,45 @@ class FunctionVisitor: SyntaxVisitor {
     }
     
     func summarize() -> String {
+        var result = "A function named \(self.identifier?.text ?? "")"
+        
+        // "with inputs ..."
+        
+        if let attributes {
+            for token in attributes.tokens(viewMode: .fixedUp) {
+                switch token.tokenKind {
+                case .identifier(let platform):
+                    result += ", available on \(platform)"
+                case .integerLiteral(let version), .floatingLiteral(let version):
+                    result += version
+                // Handle other argument types as needed.
+                default:
+                    break
+                
+            }
+            result += ", "
+        }
+        
+        /*
+         example:
+         A function named foo, available on macOS 13.0 and later, takes a string parameter named name, a variable number of integer values, and an optional integer parameter named age with a default value of 30, and returns a string.
+         */
+        
+        if let returnTypeDescription = returnType?.description {
+            result += "that returns \(returnTypeDescription)"
+        } else {
+            result += "that executes the function body and return no value"
+        }
+        
+        return result
+    }
+    
+    // public func getAs<T: AnyObject>(_ objectType: T.Type) -> T?
+    /*
+     The public function named `getAs` takes a type parameter `T` that must be a class type. It takes one argument, which is the type of `T`, has no external name, and has an internal name of `objectType`. The function returns either an instance of type `T` or `nil`.
+     */
+    
+    func explain() -> String {
         var result = "Given "
         let inputVerbiage = parameterList?.summarize() ?? "no external inputs"
         result += inputVerbiage
@@ -99,6 +138,6 @@ class FunctionVisitor: SyntaxVisitor {
             result += "execute the function body and return no value"
         }
         
-        return result
+        return "" // not implemented yet, could also return an explanation object or smth
     }
 }
