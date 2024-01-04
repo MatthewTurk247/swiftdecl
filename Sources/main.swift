@@ -100,7 +100,7 @@ extension SwiftDecl {
     }
 }
 
-let example1 = "@available(macOS 13.0, *) public func foo<T>(name: T, values: Int..., age: Int = 30) async throws -> String"
+let example1 = "@available(macOS 13.0, *) public func foo<T: Numeric>(name: T, values: Int..., age: Int = 30) async throws -> String?"
 let example2 = "func authenticateUser(method: (String) throws -> Bool) rethrows"
 
 SwiftDecl.main([example1])

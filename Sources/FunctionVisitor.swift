@@ -103,36 +103,75 @@ class FunctionVisitor: SyntaxVisitor {
         }
 
         // Add function name
-        result += "function named \(self.identifier?.text ?? "unknown")"
+        result += "function "
+        if let functionName = self.identifier?.text {
+            result += "named `\(functionName)`"
+        }
 
         // Add parameters description
         if let params = self.parameterList, !params.isEmpty {
-            let paramsDescription = params.map { param in
-                let externalName = param.firstName?.text ?? ""
-                let internalName = param.secondName?.text ?? externalName
+            let paramsDescription = params.compactMap { param in
+                // let externalName = param.firstName?.text ?? ""
+                guard let internalName = param.firstName?.text else { return "" }
                 let type = param.type?.description ?? "unknown type"
-                return "\(externalName) \(internalName): \(type)"
+                var isVariadic = false // this is a bit of a hack, but will do for now
+                let defaultArgumentValue = param.defaultArgument?.value.description
+                // PackExpansionTypeSyntax(patternType: , ellipsis: )
+                // TupleTypeSyntax(elements: )
+                for token in Syntax(param.cast(FunctionParameterSyntax.self)).tokens(viewMode: .fixedUp) {
+                    if token.text == "..." {
+                        isVariadic = true
+                    }
+                }
+                if isVariadic {
+                    return "an indefinite number of `\(internalName)` of type `\(type.dropLast(3))`"
+                }
+                var partial = "`\(internalName)` of type `\(type.trimmingCharacters(in: .whitespaces))`"
+                if let defaultArgumentValue {
+                    partial += " with default value of `\(defaultArgumentValue)`"
+                }
+                
+                return partial
             }.joined(separator: ", ")
-            result += " takes inputs: [\(paramsDescription)]"
+            result += " takes inputs \(paramsDescription)"
         } else {
             result += " takes no inputs"
         }
-
-        // Add return type
-        if let returnType = self.returnType?.description {
-            result += " and returns \(returnType)"
+        
+        if let rrType = self.returnType, let optionalReturnType = OptionalTypeSyntax(rrType) {
+            result += " and returns `\(rrType.description.dropLast())` or `nil`"
+        } else if let returnType = self.returnType?.description {
+            result += " and returns `\(returnType)`"
         } else {
             result += " and does not return a value"
         }
         
         // Add generic where clause
-        if let whereClause = self.genericWhereClause?.description {
-            result += ", where \(whereClause),"
+        if let whereClause = self.genericWhereClause {
+            print(whereClause)
+            result += ", where \(whereClause.description),"
         }
         
         // Add generic parameters description
         if let generics = self.genericParameterClause {
-            result += ", where \(generics)," // must conform to...
+            // print(generics.recursiveDescription)
+            // result += ", where \(generics)," must conform to...
+            result += ", where"
+
+                for parameter in generics.genericParameterList {
+                     let parameterName = parameter.name.text
+                        result += " \(parameterName) "
+
+                        if let inheritedType = parameter.inheritedType {
+                            result += "conforms to \(inheritedType)"
+                        } else {
+                            result += "can be any type"
+                        }
+                    if parameter.trailingComma != nil {
+                        result += ", "
+                    }
+                }
+            result += ","
         }
         
         if let throwsKeyword = self.throwsOrRethrowsKeyword {
