@@ -44,6 +44,24 @@ extension AttributeListSyntax {
 
 extension AttributeSyntax.Argument {
     func summarize() -> String {
+        var result = ""
+        
+        for token in self.tokens(viewMode: .fixedUp) {
+            switch token.tokenKind {
+            case .identifier(let platform):
+                result += "It is available on \(platform)"
+            case .integerLiteral(let version), .floatingLiteral(let version):
+                result += " " + version
+            // Handle other argument types as needed.
+            default:
+                break
+            }
+        }
+        
+        return result
+    }
+    
+    func explain() -> String {
         var result = "@available: Indicates the platform and version on which the declaration is available.\n"
         
         // Parse the arguments to extract platform and version details.

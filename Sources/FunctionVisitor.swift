@@ -56,6 +56,9 @@ class FunctionVisitor: SyntaxVisitor {
      Body
      Async specifier
      */
+    var attributeDescriptions: [String] = []
+    var parameterDescriptions: [String] = []
+    // var reverseIndex: [String: Syntax] = [:]
     
     // https://docs.swift.org/swift-book/documentation/the-swift-programming-language/attributes/
     static let mainAttribute: String = "Indicates the top-level entry point for program flow"
@@ -77,20 +80,67 @@ class FunctionVisitor: SyntaxVisitor {
     }
 
     override func visit(_ node: AvailabilityArgumentSyntax) -> SyntaxVisitorContinueKind {
+        switch node.entry {
+        case .availabilityVersionRestriction(let availabilityVersionRestrictionSyntax):
+            var availabilityDescription = "available on \(availabilityVersionRestrictionSyntax.platform.text)"
+            if let version = availabilityVersionRestrictionSyntax.version {
+                availabilityDescription += " " + version.majorMinor.text
+            }
+            print(availabilityDescription)
+        case .availabilityLabeledArgument(let availabilityLabeledArgumentSyntax):
+            switch availabilityLabeledArgumentSyntax.value {
+            case .string(let tokenSyntax):
+                print(tokenSyntax.text)
+            case .version(let versionTupleSyntax):
+                print("available on \(versionTupleSyntax.majorMinor.text)")
+            }
+            print("(" + availabilityLabeledArgumentSyntax.value.description.trimmingCharacters(in: CharacterSet.init(charactersIn: "\"")) + ")")
+        default:
+            break
+        }
+                
         return .visitChildren
     }
     
-    override func visit(_ node: InOutExprSyntax) -> SyntaxVisitorContinueKind {
+    override func visit(_ node: FunctionParameterSyntax) -> SyntaxVisitorContinueKind {
+        let isVariadic = node.tokens(viewMode: .fixedUp).contains { $0.tokenKind == .ellipsis }
+        let isInOut = node.tokens(viewMode: .fixedUp).contains { $0.tokenKind == .inoutKeyword }
+
+        if let firstName = node.firstName, let type = node.type {
+            var partial = ""
+            var typeDescription = type.description
+
+            if isVariadic {
+                partial += "an indefinite number of "
+                typeDescription = String(typeDescription.dropLast(3).trimmingCharacters(in: .whitespaces))
+            } else if isInOut {
+                partial += "a non-constant "
+                typeDescription = String(typeDescription.dropFirst(5).trimmingCharacters(in: .whitespaces))
+            }
+            partial += "`\(firstName)` of type `\(typeDescription)`"
+            if let defaultArgument = node.defaultArgument {
+                partial += " with default value of `\(defaultArgument.value)`"
+            }
+            parameterDescriptions.append(partial)
+        }
+        
         return .visitChildren
     }
-        
+    
     override func visit(_ node: GenericParameterSyntax) -> SyntaxVisitorContinueKind {
+        print(node.name.text, terminator: " ")
+        if let inheritedType = node.inheritedType {
+            print("conforms to \(inheritedType)")
+        } else {
+            print("can be any type")
+        }
         return .visitChildren
     }
     
     func summarize() -> String {
         var result = ""
         
+
         // Add async and throws specifiers
         if let asyncKeyword = self.asyncOrReasyncKeyword?.text {
             // resync?
@@ -190,6 +240,8 @@ class FunctionVisitor: SyntaxVisitor {
             let attributesDescription = attributes.map { $0.description }.joined(separator: ", ")
             result += ". " + attributes.summarize() + "."
         }
+        
+        print(parameterDescriptions)
         
         guard !result.isEmpty else { return result }
 
