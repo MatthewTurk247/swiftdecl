@@ -89,39 +89,81 @@ class FunctionVisitor: SyntaxVisitor {
     }
     
     func summarize() -> String {
-        var result = "A function named \(self.identifier?.text ?? "")"
+        var result = ""
         
-        // "with inputs ..."
-        
-        if let attributes {
-            for token in attributes.tokens(viewMode: .fixedUp) {
-                switch token.tokenKind {
-                case .identifier(let platform):
-                    result += ", available on \(platform)"
-                case .integerLiteral(let version), .floatingLiteral(let version):
-                    result += version
-                // Handle other argument types as needed.
-                default:
-                    break
-                
-            }
-            result += ", "
+        // Add async and throws specifiers
+        if let asyncKeyword = self.asyncOrReasyncKeyword?.text {
+            // resync?
+            result += "asynchronous "
+        }
+
+        // Add modifiers description
+        if let modifiers = self.modifiers {
+            result += modifiers.map { $0.description }.joined(separator: " ")
+        }
+
+        // Add function name
+        result += "function named \(self.identifier?.text ?? "unknown")"
+
+        // Add parameters description
+        if let params = self.parameterList, !params.isEmpty {
+            let paramsDescription = params.map { param in
+                let externalName = param.firstName?.text ?? ""
+                let internalName = param.secondName?.text ?? externalName
+                let type = param.type?.description ?? "unknown type"
+                return "\(externalName) \(internalName): \(type)"
+            }.joined(separator: ", ")
+            result += " takes inputs: [\(paramsDescription)]"
+        } else {
+            result += " takes no inputs"
+        }
+
+        // Add return type
+        if let returnType = self.returnType?.description {
+            result += " and returns \(returnType)"
+        } else {
+            result += " and does not return a value"
         }
         
+        // Add generic where clause
+        if let whereClause = self.genericWhereClause?.description {
+            result += ", where \(whereClause),"
+        }
+        
+        // Add generic parameters description
+        if let generics = self.genericParameterClause {
+            result += ", where \(generics)," // must conform to...
+        }
+        
+        if let throwsKeyword = self.throwsOrRethrowsKeyword {
+            switch throwsKeyword.tokenKind {
+            case .throwsKeyword:
+                result += " or throws an error"
+            case .rethrowsKeyword:
+                result += " or throws an error if its input function throws an error"
+            default:
+                break
+            }
+        }
+        
+        // Add attributes description
+        if let attributes = self.attributes, !attributes.isEmpty {
+            let attributesDescription = attributes.map { $0.description }.joined(separator: ", ")
+            result += ". " + attributes.summarize() + "."
+        }
+        
+        guard !result.isEmpty else { return result }
+
+        return result.prefix(1).capitalized + result.dropFirst()
+    }
+
+        // "with inputs ..."
+
         /*
          example:
          A function named foo, available on macOS 13.0 and later, takes a string parameter named name, a variable number of integer values, and an optional integer parameter named age with a default value of 30, and returns a string.
          */
         
-        if let returnTypeDescription = returnType?.description {
-            result += "that returns \(returnTypeDescription)"
-        } else {
-            result += "that executes the function body and return no value"
-        }
-        
-        return result
-    }
-    
     // public func getAs<T: AnyObject>(_ objectType: T.Type) -> T?
     /*
      The public function named `getAs` takes a type parameter `T` that must be a class type. It takes one argument, which is the type of `T`, has no external name, and has an internal name of `objectType`. The function returns either an instance of type `T` or `nil`.

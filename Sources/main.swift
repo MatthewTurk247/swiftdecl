@@ -21,7 +21,7 @@ struct SwiftDecl: ParsableCommand {
         var highlightMapping: [Range<String.Index>: Tooltip] = [:]
         
         if let attributes = visitor.attributes {
-            print(attributes.summarize())
+//            print(attributes.summarize())
             for attribute in attributes {
                 colorMapping[syntaxSlice(attribute, in: source)] = .red
             }
@@ -37,12 +37,12 @@ struct SwiftDecl: ParsableCommand {
         }
         if let parameterList = visitor.parameterList {
             // Go parameter by parameter
-            print(parameterList.summarize())
+//            print(parameterList.summarize())
         }
         if let returnType = visitor.returnType {
             colorMapping[syntaxSlice(returnType, in: source)] = .blue
         }
-        print(colorize(source, with: colorMapping))
+//        print(colorize(source, with: colorMapping))
         print(visitor.summarize())
     }
 }
@@ -100,4 +100,7 @@ extension SwiftDecl {
     }
 }
 
-SwiftDecl.main(["@available(macOS 13.0, *) func foo(name: String, values: Int..., age: Int = 30) -> String"])
+let example1 = "@available(macOS 13.0, *) public func foo<T>(name: T, values: Int..., age: Int = 30) async throws -> String"
+let example2 = "func authenticateUser(method: (String) throws -> Bool) rethrows"
+
+SwiftDecl.main([example1])
