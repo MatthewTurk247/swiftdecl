@@ -40,6 +40,7 @@ class FunctionVisitor: SyntaxVisitor {
     /// If a function returns a value, you specify the type of the value after the return arrow.
     var returnType: TypeSyntax?
     
+    var functionDecl: FunctionDeclSyntax?
     /*
      Function Keyword: Every function declaration starts with the func keyword.
      Return Arrow (optional): -> This symbol indicates that the function returns a value.
@@ -56,7 +57,9 @@ class FunctionVisitor: SyntaxVisitor {
      Body
      Async specifier
      */
+    private var summarizers: [FunctionDeclSyntax: FunctionSummarizer] = [:]
     var attributeDescriptions: [String] = []
+    var genericRequirementDescriptions: [String] = []
     var parameterDescriptions: [String] = []
     // var reverseIndex: [String: Syntax] = [:]
     
@@ -64,6 +67,8 @@ class FunctionVisitor: SyntaxVisitor {
     static let mainAttribute: String = "Indicates the top-level entry point for program flow"
     
     override func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
+        // https://swiftpackageindex.com/apple/swift-syntax/509.0.2/documentation/swiftsyntax/attributesyntax
+        self.functionDecl = node
         self.attributes = node.attributes
         self.modifiers = node.modifiers
         self.funcKeyword = node.funcKeyword
@@ -86,7 +91,6 @@ class FunctionVisitor: SyntaxVisitor {
             if let version = availabilityVersionRestrictionSyntax.version {
                 availabilityDescription += " " + version.majorMinor.text
             }
-            print(availabilityDescription)
         case .availabilityLabeledArgument(let availabilityLabeledArgumentSyntax):
             switch availabilityLabeledArgumentSyntax.value {
             case .string(let tokenSyntax):
@@ -102,150 +106,114 @@ class FunctionVisitor: SyntaxVisitor {
         return .visitChildren
     }
     
+    override func visit(_ node: AvailabilityLabeledArgumentSyntax) -> SyntaxVisitorContinueKind {
+        print(node.label.text)
+        return .visitChildren
+    }
+
     override func visit(_ node: FunctionParameterSyntax) -> SyntaxVisitorContinueKind {
         let isVariadic = node.tokens(viewMode: .fixedUp).contains { $0.tokenKind == .ellipsis }
         let isInOut = node.tokens(viewMode: .fixedUp).contains { $0.tokenKind == .inoutKeyword }
 
         if let firstName = node.firstName, let type = node.type {
-            var partial = ""
+            var parameterDescription = ""
             var typeDescription = type.description
 
             if isVariadic {
-                partial += "an indefinite number of "
-                typeDescription = String(typeDescription.dropLast(3).trimmingCharacters(in: .whitespaces))
+                parameterDescription += "an indefinite number of "
+                typeDescription = String(typeDescription.dropLast(3))
             } else if isInOut {
-                partial += "a non-constant "
-                typeDescription = String(typeDescription.dropFirst(5).trimmingCharacters(in: .whitespaces))
+                parameterDescription += "a non-constant "
+                typeDescription = String(typeDescription.dropFirst(5))
             }
-            partial += "`\(firstName)` of type `\(typeDescription)`"
+            parameterDescription += "`\(firstName.text.trimmingCharacters(in: .whitespacesAndNewlines))` of type `\(typeDescription.trimmingCharacters(in: .whitespacesAndNewlines))`"
             if let defaultArgument = node.defaultArgument {
-                partial += " with default value of `\(defaultArgument.value)`"
+                parameterDescription += " with default value of `\(defaultArgument.value)`"
             }
-            parameterDescriptions.append(partial)
+            
+            if let functionDecl = self.functionDecl {
+                summarizers[functionDecl, default: FunctionSummarizer()].parameterDescriptions.append(parameterDescription)
+            }
+//            self.functionDescriptions[self.functionDecl].parameterDescriptions.append(parameterDescription)
         }
         
         return .visitChildren
     }
     
     override func visit(_ node: GenericParameterSyntax) -> SyntaxVisitorContinueKind {
-        print(node.name.text, terminator: " ")
-        if let inheritedType = node.inheritedType {
-            print("conforms to \(inheritedType)")
-        } else {
-            print("can be any type")
+        if let functionDecl = self.functionDecl {
+            if let inheritedType = node.inheritedType {
+                summarizers[functionDecl, default: FunctionSummarizer()].genericRequirementDescriptions.append("\(node.name.text) conforms to \(inheritedType)")
+            } else {
+                summarizers[functionDecl, default: FunctionSummarizer()].genericRequirementDescriptions.append("can be any type")
+            }
         }
         return .visitChildren
     }
     
     func summarize() -> String {
-        var result = ""
+        var batches: [String] = []
         
-
-        // Add async and throws specifiers
-        if let asyncKeyword = self.asyncOrReasyncKeyword?.text {
-            // resync?
-            result += "asynchronous "
-        }
-
-        // Add modifiers description
-        if let modifiers = self.modifiers {
-            result += modifiers.map { $0.description }.joined(separator: " ")
-        }
-
-        // Add function name
-        result += "function "
-        if let functionName = self.identifier?.text {
-            result += "named `\(functionName)`"
-        }
-
-        // Add parameters description
-        if let params = self.parameterList, !params.isEmpty {
-            let paramsDescription = params.compactMap { param in
-                // let externalName = param.firstName?.text ?? ""
-                guard let internalName = param.firstName?.text else { return "" }
-                let type = param.type?.description ?? "unknown type"
-                var isVariadic = false // this is a bit of a hack, but will do for now
-                let defaultArgumentValue = param.defaultArgument?.value.description
-                // PackExpansionTypeSyntax(patternType: , ellipsis: )
-                // TupleTypeSyntax(elements: )
-                for token in Syntax(param.cast(FunctionParameterSyntax.self)).tokens(viewMode: .fixedUp) {
-                    if token.text == "..." {
-                        isVariadic = true
-                    }
-                }
-                if isVariadic {
-                    return "an indefinite number of `\(internalName)` of type `\(type.dropLast(3))`"
-                }
-                var partial = "`\(internalName)` of type `\(type.trimmingCharacters(in: .whitespaces))`"
-                if let defaultArgumentValue {
-                    partial += " with default value of `\(defaultArgumentValue)`"
-                }
-                
-                return partial
-            }.joined(separator: ", ")
-            result += " takes inputs \(paramsDescription)"
-        } else {
-            result += " takes no inputs"
-        }
-        
-        if let rrType = self.returnType, let optionalReturnType = OptionalTypeSyntax(rrType) {
-            result += " and returns `\(rrType.description.dropLast())` or `nil`"
-        } else if let returnType = self.returnType?.description {
-            result += " and returns `\(returnType)`"
-        } else {
-            result += " and does not return a value"
-        }
-        
-        // Add generic where clause
-        if let whereClause = self.genericWhereClause {
-            print(whereClause)
-            result += ", where \(whereClause.description),"
-        }
-        
-        // Add generic parameters description
-        if let generics = self.genericParameterClause {
-            // print(generics.recursiveDescription)
-            // result += ", where \(generics)," must conform to...
-            result += ", where"
-
-                for parameter in generics.genericParameterList {
-                     let parameterName = parameter.name.text
-                        result += " \(parameterName) "
-
-                        if let inheritedType = parameter.inheritedType {
-                            result += "conforms to \(inheritedType)"
-                        } else {
-                            result += "can be any type"
-                        }
-                    if parameter.trailingComma != nil {
-                        result += ", "
-                    }
-                }
-            result += ","
-        }
-        
-        if let throwsKeyword = self.throwsOrRethrowsKeyword {
-            switch throwsKeyword.tokenKind {
-            case .throwsKeyword:
-                result += " or throws an error"
-            case .rethrowsKeyword:
-                result += " or throws an error if its input function throws an error"
-            default:
-                break
+        for (node, summarizer) in summarizers {
+            // batches.append(summarizer.summarize(node))
+//            print("key", node.signature.asyncOrReasyncKeyword, summarizer)
+            var batch = ""
+            
+            // Add async and throws specifiers
+            if let asyncKeyword = node.signature.asyncOrReasyncKeyword {
+                // resync?
+                batch += "asynchronous "
             }
-        }
-        
-        // Add attributes description
-        if let attributes = self.attributes, !attributes.isEmpty {
-            let attributesDescription = attributes.map { $0.description }.joined(separator: ", ")
-            result += ". " + attributes.summarize() + "."
-        }
-        
-        print(parameterDescriptions)
-        
-        guard !result.isEmpty else { return result }
 
-        return result.prefix(1).capitalized + result.dropFirst()
+            // Add modifiers description
+            if let modifiers = node.modifiers {
+                batch += modifiers.map { $0.description }.joined(separator: " ")
+            }
+
+            // Add function name
+            batch += "function named `\(node.identifier.text)`"
+
+            if summarizer.parameterDescriptions.isEmpty {
+                batch += " takes no inputs"
+            } else {
+                batch += " takes inputs \(summarizer.parameterDescriptions.joined(separator: ", "))"
+            }
+            
+            if let rrType = node.signature.output?.returnType, let optionalReturnType = OptionalTypeSyntax(rrType) {
+                batch += " and returns `\(rrType.description.dropLast())` or `nil`"
+            } else if let returnType = node.signature.output?.returnType.description {
+                batch += " and returns `\(returnType)`"
+            } else {
+                batch += " and does not return a value"
+            }
+            
+            // Add generic requirements
+            if !summarizer.genericRequirementDescriptions.isEmpty {
+                batch += ", where \(summarizer.genericRequirementDescriptions.joined(separator: ", ")),"
+            }
+            
+            if let throwsKeyword = node.signature.throwsOrRethrowsKeyword {
+                switch throwsKeyword.tokenKind {
+                case .throwsKeyword:
+                    batch += " or throws an error"
+                case .rethrowsKeyword:
+                    batch += " or throws an error if its input function throws an error"
+                default:
+                    break
+                }
+            }
+            
+            // Add attributes description
+            if let attributes = node.attributes, !attributes.isEmpty {
+                let attributesDescription = attributes.map { $0.description }.joined(separator: ", ")
+                batch += ". " + attributes.summarize()
+            }
+            
+            batch = String(batch.trimmingCharacters(in: CharacterSet(charactersIn: ","))) + "."
+            batches.append(batch.isEmpty ? batch : (batch.prefix(1).capitalized + batch.dropFirst()))
+        }
+
+        return batches.joined(separator: "\n\n")
     }
 
         // "with inputs ..."

@@ -100,7 +100,22 @@ extension SwiftDecl {
     }
 }
 
-let example1 = "@available(macOS 13.0, *) public func foo<T: Numeric>(name: T, values: Int..., age: Int = 30) async throws -> String?"
-let example2 = "func authenticateUser(method: (String) throws -> Bool) rethrows"
+let source = """
+@available(macOS 13.0, *) public func foo<T: Numeric>(name: T, values: Int..., age: Int = 30) async throws -> String?
 
-SwiftDecl.main([example1])
+func authenticateUser(method: (String) throws -> Bool) rethrows
+
+func tableView(
+    _ tableView: UITableView,
+    cellForRowAt indexPath: IndexPath
+) -> UITableViewCell
+
+func snapshot(for configuration: ConfigurationAppIntent, in context: Context) async -> SimpleEntry
+
+func reduce<T>(
+    _ initialResult: T,
+    _ nextPartialResult: @escaping (T, Self.Output) -> T
+) -> Publishers.Reduce<Self, T>
+"""
+
+SwiftDecl.main([source])
