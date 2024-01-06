@@ -94,6 +94,7 @@ class FunctionVisitor: SyntaxVisitor {
         case .stringExpr(let stringLiteralExprSyntax):
             break
         case .availability(let availabilitySpecListSyntax):
+            // @available: Indicates the platform and version on which the declaration is available.
             // Is it possible to have multiple versions in this syntax?
             guard let spec = availabilitySpecListSyntax
                 .first(where: { $0.entry.kind == .availabilityVersionRestriction }) else { break }
@@ -121,69 +122,47 @@ class FunctionVisitor: SyntaxVisitor {
         case .tokenList(let tokenListSyntax):
             break
         case .none:
+            // Will add a tooltip (the data structure is yet to be updated).
+            // These tokens will be mapped to pre-written, one-line explanations of what the attribute means.
+            // summarizers[functionDecl, default: FunctionSummarizer()].tooltips.append(tooltip)
             break
         }
         
         return .visitChildren
     }
-    
-   /* override func visit(_ node: AvailabilityArgumentSyntax) -> SyntaxVisitorContinueKind {
-        switch node.entry {
-        case .availabilityVersionRestriction(let availabilityVersionRestrictionSyntax):
-            var availabilityDescription = "available on \(availabilityVersionRestrictionSyntax.platform.text)"
-            if let version = availabilityVersionRestrictionSyntax.version {
-                availabilityDescription += " " + version.majorMinor.text
-            }
-        case .availabilityLabeledArgument(let availabilityLabeledArgumentSyntax):
-            switch availabilityLabeledArgumentSyntax.value {
-            case .string(let tokenSyntax):
-                print(tokenSyntax.text)
-            case .version(let versionTupleSyntax):
-                print("available on \(versionTupleSyntax.majorMinor.text)")
-            }
-            print("(" + availabilityLabeledArgumentSyntax.value.description.trimmingCharacters(in: CharacterSet.init(charactersIn: "\"")) + ")")
-        default:
-            break
-        }
-                
-        return .visitChildren
-    }*/
 
     override func visit(_ node: FunctionParameterSyntax) -> SyntaxVisitorContinueKind {
-        let isVariadic = node.tokens(viewMode: .fixedUp).contains { $0.tokenKind == .ellipsis }
-        let isInOut = node.tokens(viewMode: .fixedUp).contains { $0.tokenKind == .inoutKeyword }
-        
-        if let firstName = node.firstName, let type = node.type {
-            var parameterDescription = ""
-            var typeDescription = type.description
+        let ellipsisToken = node.tokens(viewMode: .fixedUp).first { $0.tokenKind == .ellipsis }
+        let inoutToken = node.tokens(viewMode: .fixedUp).first { $0.tokenKind == .inoutKeyword }
+        guard let firstName = node.firstName, let type = node.type, let functionDecl else { return .visitChildren }
+        var parameterDescription = ""
+        var typeDescription = type.description
 
-            if isVariadic {
-                parameterDescription += "an indefinite number of "
-                typeDescription = String(typeDescription.dropLast(3))
-            } else if isInOut {
-                parameterDescription += "a non-constant "
-                typeDescription = String(typeDescription.dropFirst(5))
-            }
-            parameterDescription += "`\(firstName.text.trimmingCharacters(in: .whitespacesAndNewlines))` of type `\(typeDescription.trimmingCharacters(in: .whitespacesAndNewlines))`"
-            if let defaultArgument = node.defaultArgument {
-                parameterDescription += " with default value of `\(defaultArgument.value)`"
-            }
-            
-            if let functionDecl = self.functionDecl {
-                summarizers[functionDecl, default: FunctionSummarizer()].parameterDescriptions.append(parameterDescription)
-            }
+        if let ellipsisToken {
+            // Parameter is variadic.
+            parameterDescription += "an indefinite number of "
+            typeDescription = String(typeDescription.dropLast(ellipsisToken.text.count))
+        } else if let inoutToken {
+            parameterDescription += "a non-constant "
+            typeDescription = String(typeDescription.dropFirst(inoutToken.text.count))
         }
+        parameterDescription += "`\(firstName.text.trimmingCharacters(in: .whitespacesAndNewlines))` of type `\(typeDescription.trimmingCharacters(in: .whitespacesAndNewlines))`"
+        if let defaultArgument = node.defaultArgument {
+            parameterDescription += " with default value of `\(defaultArgument.value)`"
+        }
+        
+        summarizers[functionDecl, default: FunctionSummarizer()].parameterDescriptions.append(parameterDescription)
         
         return .visitChildren
     }
     
     override func visit(_ node: GenericParameterSyntax) -> SyntaxVisitorContinueKind {
-        if let functionDecl = self.functionDecl {
-            if let inheritedType = node.inheritedType {
-                summarizers[functionDecl, default: FunctionSummarizer()].genericRequirementDescriptions.append("`\(node.name.text)` conforms to `\(inheritedType)`")
-            } else {
-                summarizers[functionDecl, default: FunctionSummarizer()].genericRequirementDescriptions.append("`\(node.name.text)` can be any type")
-            }
+        guard let functionDecl else { return .visitChildren }
+        
+        if let inheritedType = node.inheritedType {
+            summarizers[functionDecl, default: FunctionSummarizer()].genericRequirementDescriptions.append("`\(node.name.text)` conforms to `\(inheritedType)`")
+        } else {
+            summarizers[functionDecl, default: FunctionSummarizer()].genericRequirementDescriptions.append("`\(node.name.text)` can be any type")
         }
         
         return .visitChildren
@@ -211,18 +190,4 @@ class FunctionVisitor: SyntaxVisitor {
     /*
      The public function named `getAs` takes a type parameter `T` that must be a class type. It takes one argument, which is the type of `T`, has no external name, and has an internal name of `objectType`. The function returns either an instance of type `T` or `nil`.
      */
-    
-    func explain() -> String {
-        var result = "Given "
-        let inputVerbiage = parameterList?.summarize() ?? "no external inputs"
-        result += inputVerbiage
-        
-        if let returnTypeDescription = returnType?.description {
-            result += "return \(returnTypeDescription)"
-        } else {
-            result += "execute the function body and return no value"
-        }
-        
-        return "" // not implemented yet, could also return an explanation object or smth
-    }
 }

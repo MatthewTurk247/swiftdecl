@@ -1,6 +1,6 @@
 //
-//  File.swift
-//  
+//  FunctionSummarizer.swift
+//
 //
 //  Created by Matthew Turk on 1/5/24.
 //
@@ -40,13 +40,14 @@ struct FunctionSummarizer {
         }
         
         if let output = node.signature.output {
-            batch += " and returns output "
+            batch += " and returns output of "
             if output.returnType.kind == .optionalType {
                 batch += "`\(output.returnType.description.dropLast())` or `nil`"
             } else {
                 batch += "`\(output.returnType)`"
             }
         } else {
+            // Executes the function body and does not return anything.
             batch += " and returns no output"
         }
         

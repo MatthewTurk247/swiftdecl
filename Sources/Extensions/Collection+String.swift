@@ -1,6 +1,6 @@
 //
-//  File.swift
-//  
+//  Collection+String.swift
+//
 //
 //  Created by Matthew Turk on 1/5/24.
 //
@@ -15,10 +15,9 @@ extension Collection where Element: CustomStringConvertible {
         case 1:
             return self.first!.description
         default:
-            let allButLast = self.prefix(self.count - 1) //self.prefix(upTo: self.index(before: self.endIndex))
+            let allButLast = self.prefix(self.count - 1)
             let last = self.suffix(1)
-            // result = self.dropLast().joined(separator: ", ") + ", and " + (self.dropFirst(self.count - 1).first ?? "")
-            return allButLast.map { $0.description }.joined(separator: ", ") + ", and " + last.first!.description
+            return "\(allButLast.map { $0.description }.joined(separator: ", ")), and \(last.first!.description)"
         }
     }
 }
