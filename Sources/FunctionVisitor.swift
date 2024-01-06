@@ -158,12 +158,15 @@ class FunctionVisitor: SyntaxVisitor {
     
     override func visit(_ node: GenericParameterSyntax) -> SyntaxVisitorContinueKind {
         guard let functionDecl else { return .visitChildren }
+        var genericRequirementDescription = "`\(node.name.text)` "
         
         if let inheritedType = node.inheritedType {
-            summarizers[functionDecl, default: FunctionSummarizer()].genericRequirementDescriptions.append("`\(node.name.text)` conforms to `\(inheritedType)`")
+            genericRequirementDescription += "conforms to `\(inheritedType)`"
         } else {
-            summarizers[functionDecl, default: FunctionSummarizer()].genericRequirementDescriptions.append("`\(node.name.text)` can be any type")
+            genericRequirementDescription += "can be any type"
         }
+        
+        summarizers[functionDecl, default: FunctionSummarizer()].genericRequirementDescriptions.append(genericRequirementDescription)
         
         return .visitChildren
     }
