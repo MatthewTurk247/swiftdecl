@@ -83,8 +83,51 @@ class FunctionVisitor: SyntaxVisitor {
 
         return .visitChildren
     }
-
-    override func visit(_ node: AvailabilityArgumentSyntax) -> SyntaxVisitorContinueKind {
+    
+    override func visit(_ node: AttributeSyntax) -> SyntaxVisitorContinueKind {
+        guard node.parent?.parent?.kind == .functionDecl else { return .skipChildren }
+        guard let functionDecl else { return .visitChildren }
+        
+        switch node.argument {
+        case .token(let tokenSyntax):
+            break
+        case .stringExpr(let stringLiteralExprSyntax):
+            break
+        case .availability(let availabilitySpecListSyntax):
+            // Is it possible to have multiple versions in this syntax?
+            guard let spec = availabilitySpecListSyntax
+                .first(where: { $0.entry.kind == .availabilityVersionRestriction }) else { break }
+            summarizers[functionDecl, default: FunctionSummarizer()].attributeDescriptions.append("available on \(spec.entry.description)")
+        case .specializeArguments(let specializeAttributeSpecListSyntax):
+            break
+        case .objCName(let objCSelectorSyntax):
+            summarizers[functionDecl, default: FunctionSummarizer()].attributeDescriptions.append("exposed to Objective-C")
+        case .implementsArguments(let implementsAttributeArgumentsSyntax):
+            break
+        case .differentiableArguments(let differentiableAttributeArgumentsSyntax):
+            break
+        case .derivativeRegistrationArguments(let derivativeRegistrationAttributeArgumentsSyntax):
+            break
+        case .namedAttributeString(let namedAttributeStringArgumentSyntax):
+            break
+        case .backDeployedArguments(let backDeployedAttributeSpecListSyntax):
+            break
+        case .conventionArguments(let conventionAttributeArgumentsSyntax):
+            break
+        case .conventionWitnessMethodArguments(let conventionWitnessMethodAttributeArgumentsSyntax):
+            break
+        case .opaqueReturnTypeOfAttributeArguments(let opaqueReturnTypeOfAttributeArgumentsSyntax):
+            break
+        case .tokenList(let tokenListSyntax):
+            break
+        case .none:
+            break
+        }
+        
+        return .visitChildren
+    }
+    
+   /* override func visit(_ node: AvailabilityArgumentSyntax) -> SyntaxVisitorContinueKind {
         switch node.entry {
         case .availabilityVersionRestriction(let availabilityVersionRestrictionSyntax):
             var availabilityDescription = "available on \(availabilityVersionRestrictionSyntax.platform.text)"
@@ -104,17 +147,12 @@ class FunctionVisitor: SyntaxVisitor {
         }
                 
         return .visitChildren
-    }
-    
-    override func visit(_ node: AvailabilityLabeledArgumentSyntax) -> SyntaxVisitorContinueKind {
-        print(node.label.text)
-        return .visitChildren
-    }
+    }*/
 
     override func visit(_ node: FunctionParameterSyntax) -> SyntaxVisitorContinueKind {
         let isVariadic = node.tokens(viewMode: .fixedUp).contains { $0.tokenKind == .ellipsis }
         let isInOut = node.tokens(viewMode: .fixedUp).contains { $0.tokenKind == .inoutKeyword }
-
+        
         if let firstName = node.firstName, let type = node.type {
             var parameterDescription = ""
             var typeDescription = type.description
@@ -134,7 +172,6 @@ class FunctionVisitor: SyntaxVisitor {
             if let functionDecl = self.functionDecl {
                 summarizers[functionDecl, default: FunctionSummarizer()].parameterDescriptions.append(parameterDescription)
             }
-//            self.functionDescriptions[self.functionDecl].parameterDescriptions.append(parameterDescription)
         }
         
         return .visitChildren
@@ -143,11 +180,12 @@ class FunctionVisitor: SyntaxVisitor {
     override func visit(_ node: GenericParameterSyntax) -> SyntaxVisitorContinueKind {
         if let functionDecl = self.functionDecl {
             if let inheritedType = node.inheritedType {
-                summarizers[functionDecl, default: FunctionSummarizer()].genericRequirementDescriptions.append("\(node.name.text) conforms to \(inheritedType)")
+                summarizers[functionDecl, default: FunctionSummarizer()].genericRequirementDescriptions.append("`\(node.name.text)` conforms to `\(inheritedType)`")
             } else {
-                summarizers[functionDecl, default: FunctionSummarizer()].genericRequirementDescriptions.append("can be any type")
+                summarizers[functionDecl, default: FunctionSummarizer()].genericRequirementDescriptions.append("`\(node.name.text)` can be any type")
             }
         }
+        
         return .visitChildren
     }
     
@@ -155,69 +193,15 @@ class FunctionVisitor: SyntaxVisitor {
         var batches: [String] = []
         
         for (node, summarizer) in summarizers {
-            // batches.append(summarizer.summarize(node))
-//            print("key", node.signature.asyncOrReasyncKeyword, summarizer)
-            var batch = ""
-            
-            // Add async and throws specifiers
-            if let asyncKeyword = node.signature.asyncOrReasyncKeyword {
-                // resync?
-                batch += "asynchronous "
-            }
-
-            // Add modifiers description
-            if let modifiers = node.modifiers {
-                batch += modifiers.map { $0.description }.joined(separator: " ")
-            }
-
-            // Add function name
-            batch += "function named `\(node.identifier.text)`"
-
-            if summarizer.parameterDescriptions.isEmpty {
-                batch += " takes no inputs"
-            } else {
-                batch += " takes inputs \(summarizer.parameterDescriptions.joined(separator: ", "))"
-            }
-            
-            if let rrType = node.signature.output?.returnType, let optionalReturnType = OptionalTypeSyntax(rrType) {
-                batch += " and returns `\(rrType.description.dropLast())` or `nil`"
-            } else if let returnType = node.signature.output?.returnType.description {
-                batch += " and returns `\(returnType)`"
-            } else {
-                batch += " and does not return a value"
-            }
-            
-            // Add generic requirements
-            if !summarizer.genericRequirementDescriptions.isEmpty {
-                batch += ", where \(summarizer.genericRequirementDescriptions.joined(separator: ", ")),"
-            }
-            
-            if let throwsKeyword = node.signature.throwsOrRethrowsKeyword {
-                switch throwsKeyword.tokenKind {
-                case .throwsKeyword:
-                    batch += " or throws an error"
-                case .rethrowsKeyword:
-                    batch += " or throws an error if its input function throws an error"
-                default:
-                    break
-                }
-            }
-            
-            // Add attributes description
-            if let attributes = node.attributes, !attributes.isEmpty {
-                let attributesDescription = attributes.map { $0.description }.joined(separator: ", ")
-                batch += ". " + attributes.summarize()
-            }
-            
-            batch = String(batch.trimmingCharacters(in: CharacterSet(charactersIn: ","))) + "."
+            var batch = summarizer.summarize(node)
+            batch = String(batch.trimmingCharacters(in: CharacterSet(charactersIn: ",").union(.whitespacesAndNewlines)))
+            batch += "."
             batches.append(batch.isEmpty ? batch : (batch.prefix(1).capitalized + batch.dropFirst()))
         }
 
         return batches.joined(separator: "\n\n")
     }
-
-        // "with inputs ..."
-
+    
         /*
          example:
          A function named foo, available on macOS 13.0 and later, takes a string parameter named name, a variable number of integer values, and an optional integer parameter named age with a default value of 30, and returns a string.

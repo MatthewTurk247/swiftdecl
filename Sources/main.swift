@@ -116,6 +116,10 @@ func reduce<T>(
     _ initialResult: T,
     _ nextPartialResult: @escaping (T, Self.Output) -> T
 ) -> Publishers.Reduce<Self, T>
+
+private func getAs<T: AnyObject>(_ objectType: T.Type) -> T?
+
+func bar<T: Codable, R: Codable>(_ blah: T) -> R
 """
 
 SwiftDecl.main([source])
