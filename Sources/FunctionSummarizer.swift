@@ -75,3 +75,89 @@ struct FunctionSummarizer {
         return batch
     }
 }
+
+extension SyntaxProtocol {
+    
+//    private func naturalLanguageWrite<Target: TextOutputStream>(to target: inout Target, indentLevel: Int) {
+//            if let simpleType = Syntax(self).as(SimpleTypeIdentifierSyntax.self) {
+//                // Base case: SimpleTypeIdentifierSyntax
+//                target.write("Type: \(simpleType.name.text)")
+//            } else {
+//                // Constructing sentence for other syntax types
+//                let typeName = self.description
+//                target.write("This is a \(typeName) which contains: ")
+//                
+//                let allChildren = children(viewMode: .all)
+//                if !allChildren.isEmpty {
+//                    for (num, child) in allChildren.enumerated() {
+//                        if num > 0 { target.write(", ") }
+//                        child.naturalLanguageWrite(to: &target, indentLevel: indentLevel + 1)
+//                    }
+//                } else {
+//                    target.write("no significant elements")
+//                }
+//            }
+//
+//            // Handle indentation and new lines for readability
+//            if indentLevel > 0 {
+//                target.write("\n")
+//                target.write(String(repeating: " ", count: indentLevel * 2))
+//            }
+//        }
+    // self.debugDescription
+    
+    /*var tooltip: Tooltip {
+        // ...
+    }*/
+}
+
+extension TypeSyntax {
+    var naturalLanguageDescription: String {
+        // SimpleTypeIdentifierSyntax(self)
+        //https://swiftpackageindex.com/apple/swift-syntax/508.0.1/documentation/swiftsyntax/typesyntax
+        switch self.kind {
+        case .simpleTypeIdentifier:
+            self.description
+        case .arrayType:
+            guard let arrayTypeSyntax = ArrayTypeSyntax(self) else { break }
+            arrayTypeSyntax.recursiveDescription
+            return "array of \(arrayTypeSyntax.elementType.naturalLanguageDescription)"
+        case .dictionaryType:
+            guard let dictionaryTypeSyntax = DictionaryTypeSyntax(self) else { break }
+            return "dictionary mapping \(dictionaryTypeSyntax.keyType.naturalLanguageDescription) to \(dictionaryTypeSyntax.valueType.naturalLanguageDescription)"
+        case .tupleType:
+            guard let tupleTypeSyntax = TupleTypeSyntax(self) else { break }
+            return "tuple of \(tupleTypeSyntax.elements.map { $0.type.naturalLanguageDescription }.itemized())"
+        case .optionalType:
+            guard let optionalTypeSyntax = OptionalTypeSyntax(self) else { break }
+            return "\(optionalTypeSyntax.wrappedType.naturalLanguageDescription) or nil"
+        case .functionType:
+            guard let functionTypeSyntax = FunctionTypeSyntax(self) else { break }
+            return "function mapping \(functionTypeSyntax.arguments.map { $0.type.naturalLanguageDescription }) to \(functionTypeSyntax.returnType.naturalLanguageDescription)"
+        case .attributedType:
+            guard let attributedTypeSyntax = AttributedTypeSyntax(self) else { break }
+            return "\(attributedTypeSyntax.attributes.map { $0.description })"
+        default:
+            return self.description
+        }
+        
+        return self.description
+    }
+}
+
+/*extension ArrayTypeSyntax {
+    var naturalLanguageDescription: String {
+        "array of \(self.elementType.na)"
+    }
+}*/
+
+class TypeVisitor: SyntaxVisitor {
+    override func visit(_ node: SimpleTypeIdentifierSyntax) -> SyntaxVisitorContinueKind {
+        return .visitChildren
+    }
+    
+    override func visit(_ node: DictionaryTypeSyntax) -> SyntaxVisitorContinueKind {
+        print("dictionary mapping \(node.keyType) to \(node.valueType)")
+        return .visitChildren
+    }
+}

@@ -150,6 +150,7 @@ class FunctionVisitor: SyntaxVisitor {
         if let defaultArgument = node.defaultArgument {
             parameterDescription += " with default value of `\(defaultArgument.value)`"
         }
+        // print(node.type?.naturalLanguageDescription)
         
         summarizers[functionDecl, default: FunctionSummarizer()].parameterDescriptions.append(parameterDescription)
         

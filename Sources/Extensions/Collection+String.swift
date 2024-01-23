@@ -14,6 +14,8 @@ extension Collection where Element: CustomStringConvertible {
             return ""
         case 1:
             return self.first!.description
+        case 2:
+            return "\(self.first!.description) and \(self.suffix(1).first!)"
         default:
             let allButLast = self.prefix(self.count - 1)
             let last = self.suffix(1)
