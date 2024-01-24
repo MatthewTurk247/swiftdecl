@@ -61,7 +61,7 @@ class FunctionVisitor: SyntaxVisitor {
     var attributeDescriptions: [String] = []
     var genericRequirementDescriptions: [String] = []
     var parameterDescriptions: [String] = []
-    // var reverseIndex: [String: Syntax] = [:]
+    var footnotes: [Footnote] = []
     
     // https://docs.swift.org/swift-book/documentation/the-swift-programming-language/attributes/
     static let mainAttribute: String = "Indicates the top-level entry point for program flow"
@@ -151,6 +151,9 @@ class FunctionVisitor: SyntaxVisitor {
             parameterDescription += " with default value of `\(defaultArgument.value)`"
         }
         // print(node.type?.naturalLanguageDescription)
+        print(node.type?.recursiveNaturalLanguageDescription)
+        // summarizers[functionDecl]
+        // footnotes.append(node.type?.recursiveNaturalLanguageDescription)
         
         summarizers[functionDecl, default: FunctionSummarizer()].parameterDescriptions.append(parameterDescription)
         
