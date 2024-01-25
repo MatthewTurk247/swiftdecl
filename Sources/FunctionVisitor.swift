@@ -9,7 +9,7 @@ import Foundation
 import SwiftSyntax
 
 class FunctionVisitor: SyntaxVisitor {
-    /// Attributes (optional): Attributes/property wrappers provide more information about the function's behavior or intended use, e.g., @discardableResult.
+    /// Attributes (optional): Attributes/property wrappers provide more information about the function's behavior or intended use (e.g., `@discardableResult`).
     var attributes: AttributeListSyntax?
 
     /// Modifiers (optional): These adjust the function's behavior or accessibility (e.g., `public`, `private`, `static`).
@@ -146,7 +146,9 @@ class FunctionVisitor: SyntaxVisitor {
             parameterDescription += "a non-constant "
             typeDescription = String(typeDescription.dropFirst(inoutToken.text.count))
         }
-        parameterDescription += "`\(firstName.text.trimmingCharacters(in: .whitespacesAndNewlines))` of type `\(typeDescription.trimmingCharacters(in: .whitespacesAndNewlines))`"
+        // TODO: If there is a first name and second name, add a footnote explaining this.
+        let parameterName = node.secondName?.text.trimmingCharacters(in: .whitespacesAndNewlines) ?? firstName.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        parameterDescription += "`\(parameterName)` of type `\(typeDescription.trimmingCharacters(in: .whitespacesAndNewlines))`"
         if let defaultArgument = node.defaultArgument {
             parameterDescription += " with default value of `\(defaultArgument.value)`"
         }

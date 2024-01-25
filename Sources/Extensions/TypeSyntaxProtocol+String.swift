@@ -31,8 +31,7 @@ extension TypeSyntaxProtocol {
         case .optionalType(let optionalTypeSyntax):
             return "\(optionalTypeSyntax.wrappedType.recursiveNaturalLanguageDescription) or nil"
         case .constrainedSugarType(let constrainedSugarTypeSyntax):
-            // someOrAnySpecifier
-            return constrainedSugarTypeSyntax.recursiveNaturalLanguageDescription
+            return "\(constrainedSugarTypeSyntax.someOrAnySpecifier.text) \(constrainedSugarTypeSyntax.baseType.recursiveNaturalLanguageDescription)"
         case .implicitlyUnwrappedOptionalType(let implicitlyUnwrappedOptionalTypeSyntax):
             break
         case .compositionType(let compositionTypeSyntax):
@@ -44,11 +43,10 @@ extension TypeSyntaxProtocol {
         case .tupleType(let tupleTypeSyntax):
             return "\(tupleTypeSyntax.elements.count)-tuple of \(tupleTypeSyntax.elements.map { $0.type.recursiveNaturalLanguageDescription }.itemized())"
         case .functionType(let functionTypeSyntax):
-            return "function that returns \(functionTypeSyntax.returnType.recursiveNaturalLanguageDescription)"
+            return "\(functionTypeSyntax.throwsOrRethrowsKeyword == nil ? "" : "throwing ")function that returns \(functionTypeSyntax.returnType.recursiveNaturalLanguageDescription)"
         case .attributedType(let attributedTypeSyntax):
             var attributedTypeDescription = attributedTypeSyntax.baseType.recursiveNaturalLanguageDescription
-            if let attributes = attributedTypeSyntax.attributes,
-               attributes.contains(where: { $0.description.trimmingCharacters(in: .whitespacesAndNewlines) == "@escaping" }) {
+            if (attributedTypeSyntax.attributes?.first { $0.description.trimmingCharacters(in: .whitespacesAndNewlines) == "@escaping" }) != nil {
                 attributedTypeDescription += " (escaping closure)"
             }
             
