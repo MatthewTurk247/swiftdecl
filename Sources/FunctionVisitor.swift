@@ -136,7 +136,7 @@ class FunctionVisitor: SyntaxVisitor {
         let inoutToken = node.tokens(viewMode: .fixedUp).first { $0.tokenKind == .inoutKeyword }
         guard let firstName = node.firstName, let type = node.type, let functionDecl else { return .visitChildren }
         var parameterDescription = ""
-        var typeDescription = type.description
+        var typeDescription = type.naturalLanguageDescription(includeChildren: false)
 
         if let ellipsisToken {
             // Parameter is variadic.
@@ -148,7 +148,7 @@ class FunctionVisitor: SyntaxVisitor {
         }
         // TODO: If there is a first name and second name, add a footnote explaining this.
         let parameterName = node.secondName?.text.trimmingCharacters(in: .whitespacesAndNewlines) ?? firstName.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        parameterDescription += "`\(parameterName)` of type `\(typeDescription.trimmingCharacters(in: .whitespacesAndNewlines))`"
+        parameterDescription += "`\(parameterName)` of type \(typeDescription.trimmingCharacters(in: .whitespacesAndNewlines))"
         if let defaultArgument = node.defaultArgument {
             parameterDescription += " with default value of `\(defaultArgument.value)`"
         }

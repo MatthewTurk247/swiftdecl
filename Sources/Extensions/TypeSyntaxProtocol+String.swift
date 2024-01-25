@@ -15,48 +15,73 @@ import SwiftSyntax
 
 extension TypeSyntaxProtocol {
     var recursiveNaturalLanguageDescription: String {
+        // This computed property could have been implemented recursively, but the implementation would be almost identitcal to the function below.
+        naturalLanguageDescription(includeChildren: true)
+    }
+    
+    func naturalLanguageDescription(includeChildren: Bool) -> String {
         switch Syntax(self).as(SyntaxEnum.self) {
         case .simpleTypeIdentifier(let simpleTypeIdentifierSyntax):
-            return simpleTypeIdentifierSyntax.name.text
+            return "`\(simpleTypeIdentifierSyntax.name.text)`"
         case .memberTypeIdentifier(let memberTypeIdentifierSyntax):
-            break
+            return "`\(memberTypeIdentifierSyntax.description)`"
         case .classRestrictionType(let classRestrictionTypeSyntax):
             return "class-constrained type"
         case .arrayType(let arrayTypeSyntax):
-            return "array of \(arrayTypeSyntax.elementType.recursiveNaturalLanguageDescription)"
+            return "array of \(includeChildren ? arrayTypeSyntax.elementType.naturalLanguageDescription(includeChildren: true) : arrayTypeSyntax.elementType.description)"
         case .dictionaryType(let dictionaryTypeSyntax):
-            return "dictionary mapping \(dictionaryTypeSyntax.keyType.recursiveNaturalLanguageDescription) to \(dictionaryTypeSyntax.valueType.recursiveNaturalLanguageDescription)"
+            return "dictionary mapping \(includeChildren ? dictionaryTypeSyntax.keyType.naturalLanguageDescription(includeChildren: true) : dictionaryTypeSyntax.keyType.description) to \(includeChildren ? dictionaryTypeSyntax.valueType.naturalLanguageDescription(includeChildren: true) : dictionaryTypeSyntax.valueType.description)"
         case .metatypeType(let metatypeTypeSyntax):
-            break
+            return "`\(metatypeTypeSyntax.description)`"
         case .optionalType(let optionalTypeSyntax):
-            return "\(optionalTypeSyntax.wrappedType.recursiveNaturalLanguageDescription) or nil"
+            return "\(includeChildren ? optionalTypeSyntax.wrappedType.naturalLanguageDescription(includeChildren: true) : optionalTypeSyntax.wrappedType.description) or nil"
         case .constrainedSugarType(let constrainedSugarTypeSyntax):
-            return "\(constrainedSugarTypeSyntax.someOrAnySpecifier.text) \(constrainedSugarTypeSyntax.baseType.recursiveNaturalLanguageDescription)"
+            return "\(constrainedSugarTypeSyntax.someOrAnySpecifier.text) \(includeChildren ? constrainedSugarTypeSyntax.baseType.naturalLanguageDescription(includeChildren: true) : constrainedSugarTypeSyntax.baseType.description)"
         case .implicitlyUnwrappedOptionalType(let implicitlyUnwrappedOptionalTypeSyntax):
-            break
+            return includeChildren ? implicitlyUnwrappedOptionalTypeSyntax.description : "implicitly unwrapped optional"
         case .compositionType(let compositionTypeSyntax):
-            break
+            return includeChildren ? compositionTypeSyntax.description : "type composition"
         case .packExpansionType(let packExpansionTypeSyntax):
-            return "variadic expansion of \(packExpansionTypeSyntax.patternType.recursiveNaturalLanguageDescription)"
+            return "variadic expansion of \(includeChildren ? packExpansionTypeSyntax.patternType.naturalLanguageDescription(includeChildren: true) : packExpansionTypeSyntax.patternType.description)"
         case .packReferenceType(let packReferenceTypeSyntax):
-            return "reference to variadic pack \(packReferenceTypeSyntax.packType.recursiveNaturalLanguageDescription)"
+            return "reference to variadic pack \(includeChildren ? packReferenceTypeSyntax.packType.naturalLanguageDescription(includeChildren: true) : packReferenceTypeSyntax.packType.description)"
         case .tupleType(let tupleTypeSyntax):
-            return "\(tupleTypeSyntax.elements.count)-tuple of \(tupleTypeSyntax.elements.map { $0.type.recursiveNaturalLanguageDescription }.itemized())"
+            return "\(tupleTypeSyntax.elements.count)-tuple of \(includeChildren ? tupleTypeSyntax.elements.map { $0.type.naturalLanguageDescription(includeChildren: true) }.itemized() : tupleTypeSyntax.elements.map { $0.type.description }.itemized())"
         case .functionType(let functionTypeSyntax):
-            return "\(functionTypeSyntax.throwsOrRethrowsKeyword == nil ? "" : "throwing ")function that returns \(functionTypeSyntax.returnType.recursiveNaturalLanguageDescription)"
-        case .attributedType(let attributedTypeSyntax):
-            var attributedTypeDescription = attributedTypeSyntax.baseType.recursiveNaturalLanguageDescription
-            if (attributedTypeSyntax.attributes?.first { $0.description.trimmingCharacters(in: .whitespacesAndNewlines) == "@escaping" }) != nil {
-                attributedTypeDescription += " (escaping closure)"
+            var functionDescription = ""
+            
+            // Describe the arity of the function specified in the node.
+            switch functionTypeSyntax.arguments.count {
+            case 0:
+                functionDescription += "nullary"
+            case 1:
+                functionDescription += "unary"
+            case 2:
+                functionDescription += "binary"
+            case 3:
+                functionDescription += "ternary"
+            default:
+                functionDescription += "\(functionTypeSyntax.arguments.count)-ary"
+            }
+                        
+            functionDescription += " \(functionTypeSyntax.throwsOrRethrowsKeyword == nil ? "" : "throwing ")function that returns "
+            if includeChildren {
+                functionDescription += functionTypeSyntax.returnType.naturalLanguageDescription(includeChildren: true)
+            } else {
+                functionDescription += "`\(functionTypeSyntax.returnType.description)`"
             }
             
+            return functionDescription
+        case .attributedType(let attributedTypeSyntax):
+            var attributedTypeDescription = includeChildren ? attributedTypeSyntax.baseType.naturalLanguageDescription(includeChildren: true) : "`\(attributedTypeSyntax.baseType.description)`"
+            if (attributedTypeSyntax.attributes?.first { $0.description.trimmingCharacters(in: .whitespacesAndNewlines) == "@escaping" }) != nil {
+                attributedTypeDescription += " escaping closure"
+            }
             return attributedTypeDescription
         case .namedOpaqueReturnType(let namedOpaqueReturnTypeSyntax):
-            return "opaque \(namedOpaqueReturnTypeSyntax.baseType.recursiveNaturalLanguageDescription)"
+            return "opaque \(includeChildren ? namedOpaqueReturnTypeSyntax.baseType.naturalLanguageDescription(includeChildren: true) : namedOpaqueReturnTypeSyntax.baseType.description)"
         default:
-            break
+            return self.description
         }
-        
-        return self.description
     }
 }
