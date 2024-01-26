@@ -12,8 +12,8 @@ struct FunctionSummarizer {
     var attributeDescriptions: [String] = []
     var parameterDescriptions: [String] = []
     var genericRequirementDescriptions: [String] = []
-    var tooltips: [Tooltip] = []
-    // var node: Sytnax
+    var footnotes: [Footnote] = []
+    // var node: FunctionDeclSyntax
     // and then this will be initializer
     
     func summarize(_ node: FunctionDeclSyntax) -> String {
@@ -76,22 +76,5 @@ struct FunctionSummarizer {
         }
         
         return batch
-    }
-}
-
-/*extension ArrayTypeSyntax {
-    var naturalLanguageDescription: String {
-        "array of \(self.elementType.na)"
-    }
-}*/
-
-class TypeVisitor: SyntaxVisitor {
-    override func visit(_ node: SimpleTypeIdentifierSyntax) -> SyntaxVisitorContinueKind {
-        return .visitChildren
-    }
-    
-    override func visit(_ node: DictionaryTypeSyntax) -> SyntaxVisitorContinueKind {
-        print("dictionary mapping \(node.keyType) to \(node.valueType)")
-        return .visitChildren
     }
 }

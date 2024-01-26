@@ -38,11 +38,11 @@ extension TypeSyntaxProtocol {
         case .constrainedSugarType(let constrainedSugarTypeSyntax):
             return "\(constrainedSugarTypeSyntax.someOrAnySpecifier.text) \(includeChildren ? constrainedSugarTypeSyntax.baseType.naturalLanguageDescription(includeChildren: true) : constrainedSugarTypeSyntax.baseType.description)"
         case .implicitlyUnwrappedOptionalType(let implicitlyUnwrappedOptionalTypeSyntax):
-            return includeChildren ? implicitlyUnwrappedOptionalTypeSyntax.description : "implicitly unwrapped optional"
+            return "implicitly unwrapped optional of \(includeChildren ? implicitlyUnwrappedOptionalTypeSyntax.wrappedType.description : implicitlyUnwrappedOptionalTypeSyntax.wrappedType.naturalLanguageDescription(includeChildren: true))"
         case .compositionType(let compositionTypeSyntax):
             return includeChildren ? compositionTypeSyntax.description : "type composition"
         case .packExpansionType(let packExpansionTypeSyntax):
-            return "variadic expansion of \(includeChildren ? packExpansionTypeSyntax.patternType.naturalLanguageDescription(includeChildren: true) : packExpansionTypeSyntax.patternType.description)"
+            return packExpansionTypeSyntax.description
         case .packReferenceType(let packReferenceTypeSyntax):
             return "reference to variadic pack \(includeChildren ? packReferenceTypeSyntax.packType.naturalLanguageDescription(includeChildren: true) : packReferenceTypeSyntax.packType.description)"
         case .tupleType(let tupleTypeSyntax):
@@ -65,13 +65,8 @@ extension TypeSyntaxProtocol {
             }
                         
             functionDescription += " \(functionTypeSyntax.throwsOrRethrowsKeyword == nil ? "" : "throwing ")function that returns "
-            if includeChildren {
-                functionDescription += functionTypeSyntax.returnType.naturalLanguageDescription(includeChildren: true)
-            } else {
-                functionDescription += "`\(functionTypeSyntax.returnType.description)`"
-            }
             
-            return functionDescription
+            return "\(functionTypeSyntax.throwsOrRethrowsKeyword == nil ? "" : "throwing ")function that returns \(includeChildren ? functionTypeSyntax.returnType.naturalLanguageDescription(includeChildren: true) : "`\(functionTypeSyntax.returnType.description)`")"
         case .attributedType(let attributedTypeSyntax):
             var attributedTypeDescription = includeChildren ? attributedTypeSyntax.baseType.naturalLanguageDescription(includeChildren: true) : "`\(attributedTypeSyntax.baseType.description)`"
             if (attributedTypeSyntax.attributes?.first { $0.description.trimmingCharacters(in: .whitespacesAndNewlines) == "@escaping" }) != nil {

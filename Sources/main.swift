@@ -119,7 +119,7 @@ func reduce<T>(
 
 private func getAs<T: AnyObject>(_ objectType: T.Type) -> T?
 
-func bar<T: Codable, R: Codable>(_ blah: inout [T]) -> R
+func foo<T: Codable, R: Codable>(_ bar: inout [T]) -> R
 """
 
 SwiftDecl.main([source])

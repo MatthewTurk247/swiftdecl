@@ -8,6 +8,31 @@
 import Foundation
 import SwiftSyntax
 
+/// `FunctionVisitor` is a subclass of `SyntaxVisitor` tailored to traverse and analyze Swift function declarations within a syntax tree.
+///
+/// When parsing a Swift source file using SwiftSyntax, `FunctionVisitor` walks through the syntax tree and collects detailed information about each function it encounters. This includes attributes, modifiers, function name, generic parameters, and other key components of a function's declaration.
+///
+/// The gathered information is utilized to construct a comprehensive summary of the function, providing insights into its behavior, accessibility, and structure. This summary can be particularly useful for generating documentation, aiding in code analysis, or presenting an overview of the function's capabilities and requirements in a human-readable format.
+///
+/// - Note: `FunctionVisitor` focuses specifically on function declarations and is not designed to handle other syntax tree elements. As a subclass of `SyntaxVisitor`, it overrides specific `visit` methods to target the components of a function declaration.
+///
+/// ## Usage
+///
+/// You typically use an instance of `FunctionVisitor` in conjunction with a ``SyntaxParser`` to analyze a Swift source file. After parsing the file, pass the resulting syntax tree to the `FunctionVisitor` for traversal and analysis.
+///
+/// Here is an example of how to use `FunctionVisitor`:
+///
+/// ```swift
+/// import SwiftSyntax
+///
+/// let source = try SyntaxParser.parse("...")
+/// let functionVisitor = FunctionVisitor()
+/// source.walk(functionVisitor)
+/// let functionSummaries = functionVisitor.summarize()
+/// ```
+///
+/// After visiting all nodes in the syntax tree, you can retrieve a summary of each function with the `summarize()` method.
+/// A future version is expected to produce footnotes for further detailed explanations of the structure and meaning of Swift function declarations.
 class FunctionVisitor: SyntaxVisitor {
     /// Attributes (optional): Attributes/property wrappers provide more information about the function's behavior or intended use (e.g., `@discardableResult`).
     var attributes: AttributeListSyntax?
@@ -144,16 +169,16 @@ class FunctionVisitor: SyntaxVisitor {
             typeDescription = String(typeDescription.dropLast(ellipsisToken.text.count))
         } else if let inoutToken {
             parameterDescription += "a non-constant "
-            typeDescription = String(typeDescription.dropFirst(inoutToken.text.count))
+            //typeDescription = String(typeDescription.dropFirst(inoutToken.text.count))
         }
         // TODO: If there is a first name and second name, add a footnote explaining this.
         let parameterName = node.secondName?.text.trimmingCharacters(in: .whitespacesAndNewlines) ?? firstName.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        parameterDescription += "`\(parameterName)` of type \(typeDescription.trimmingCharacters(in: .whitespacesAndNewlines))"
+        parameterDescription += "`\(parameterName)` of type \(typeDescription)"
         if let defaultArgument = node.defaultArgument {
             parameterDescription += " with default value of `\(defaultArgument.value)`"
         }
         // print(node.type?.naturalLanguageDescription)
-        print(node.type?.recursiveNaturalLanguageDescription)
+        // print(node.type?.recursiveNaturalLanguageDescription)
         // summarizers[functionDecl]
         // footnotes.append(node.type?.recursiveNaturalLanguageDescription)
         

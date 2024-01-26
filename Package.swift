@@ -20,7 +20,15 @@ let package = Package(
                         .product(name: "SwiftSyntax", package: "swift-syntax"),
                         .product(name: "SwiftSyntaxParser", package: "swift-syntax")
                     ]
-                )
+                ),
+        .testTarget(name: "FunctionVisitorTests",
+                    dependencies: [
+                        .product(name: "ArgumentParser", package: "swift-argument-parser"),
+                        .product(name: "SwiftSyntax", package: "swift-syntax"),
+                        .product(name: "SwiftSyntaxParser", package: "swift-syntax"),
+                        .byName(name: "swiftdecl")
+                    ]
+               )
         //.target(name: "swiftdecl", dependencies: ["ArgumentParser", "SwiftSyntax"]),
     ]
 )
