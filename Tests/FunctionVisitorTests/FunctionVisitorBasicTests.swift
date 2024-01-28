@@ -32,7 +32,7 @@ class FunctionVisitorBasicTests: XCTestCase {
                          return 0
                      }
                      """
-        let functionVisitor = FunctionVisitor()
+        let functionVisitor = FunctionVisitor(viewMode: .fixedUp)
         let parsedSyntax = try! SyntaxParser.parse(source: source)
         functionVisitor.walk(parsedSyntax)
         
@@ -55,17 +55,40 @@ class FunctionVisitorBasicTests: XCTestCase {
     }
     
     func testSmallSourceParsingPerformance() {
+        let source = """
+        @available(macOS 13.0, *) public func foo<T: Numeric>(name: T, values: Int..., age: Int = 30) async throws -> String?
+
+        func authenticateUser(method: (String) throws -> Bool) rethrows
+
+        func tableView(
+            _ tableView: UITableView,
+            cellForRowAt indexPath: IndexPath
+        ) -> UITableViewCell
+
+        func snapshot(for configuration: ConfigurationAppIntent, in context: Context) async -> SimpleEntry
+
+        func reduce<T>(
+            _ initialResult: T,
+            _ nextPartialResult: @escaping (T, Self.Output) -> T
+        ) -> Publishers.Reduce<Self, T>
+
+        private func getAs<T: AnyObject>(_ objectType: T.Type) -> T?
+
+        func foo<T: Codable, R: Codable>(_ bar: inout [T]) -> R
+        """
+
         measure {
-            let parsedSyntax = try! SyntaxParser.parse(source: """
+            /*let parsedSyntax = try! SyntaxParser.parse(source: """
                      @discardableResult
                      func functionWithAttributes() -> Int {
                          return 0
                      }
                      """)
-            let functionVisitor = FunctionVisitor()
+            let functionVisitor = FunctionVisitor(viewMode: .fixedUp)
             functionVisitor.walk(parsedSyntax)
             // Optionally, measure summarization performance as well
-            _ = functionVisitor.summarize()
+            _ = functionVisitor.summarize()*/
+            SwiftDecl.main([source])
         }
     }
 }

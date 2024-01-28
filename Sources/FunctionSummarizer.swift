@@ -12,11 +12,11 @@ struct FunctionSummarizer {
     var attributeDescriptions: [String] = []
     var parameterDescriptions: [String] = []
     var genericRequirementDescriptions: [String] = []
-    var footnotes: [Footnote] = []
     // var node: FunctionDeclSyntax
     // and then this will be initializer
     
-    func summarize(_ node: FunctionDeclSyntax) -> String {
+    func summarize(_ node: FunctionDeclSyntax) -> Translation {
+        var footnotes: [Footnote] = []
         var batch = ""
 
         if node.signature.asyncOrReasyncKeyword != nil {
@@ -27,7 +27,6 @@ struct FunctionSummarizer {
             batch += modifiers.map { $0.description }.joined(separator: " ")
         }
 
-        // Add function name
         batch += "function named `\(node.identifier.text)`"
 
         if self.parameterDescriptions.isEmpty {
@@ -48,7 +47,7 @@ struct FunctionSummarizer {
             } else {
                 batch += "`\(output.returnType)`"
             }
-            // batch += "`\(output.returnType.recursiveNaturalLanguageDescription)`"
+            footnotes.append(Footnote(nodeDescription: output.returnType.description, text: "Returns \(output.returnType.recursiveNaturalLanguageDescription)"))
         } else {
             // Executes the function body and does not return anything.
             batch += " and returns no output"
@@ -75,6 +74,11 @@ struct FunctionSummarizer {
             batch += ". It is \(attributeDescriptions.joined(separator: ", "))"
         }
         
-        return batch
+        return Translation(text: batch, footnotes: footnotes)
+    }
+    
+    struct Translation: Encodable {
+        let text: String
+        let footnotes: [Footnote]
     }
 }

@@ -1,4 +1,5 @@
 import ArgumentParser
+import Foundation
 import SwiftSyntax
 import SwiftSyntaxParser
 
@@ -17,33 +18,16 @@ struct SwiftDecl: ParsableCommand {
         guard !syntaxTree.hasError else { throw InputError.invalidSource } // { throw SwiftSyntax.UnexpectedNodesSyntax }
         
         visitor.walk(syntaxTree)
-        var colorMapping: [Range<String.Index>: ANSI] = [:]
-        var highlightMapping: [Range<String.Index>: Tooltip] = [:]
         
-        if let attributes = visitor.attributes {
-//            print(attributes.summarize())
-            for attribute in attributes {
-                colorMapping[syntaxSlice(attribute, in: source)] = .red
+        for translation in visitor.summarize() {
+            if json,
+               let translationEncoding = try? JSONEncoder().encode(translation),
+               let translationString = String(data: translationEncoding, encoding: .utf8) {
+                print(translationString)
+            } else {
+                print(translation.text, terminator: "\n\n")
             }
         }
-        if let funcKeyword = visitor.funcKeyword {
-            colorMapping[syntaxSlice(funcKeyword, in: source)] = .red
-        }
-        if let identifier = visitor.identifier {
-            colorMapping[syntaxSlice(identifier, in: source)] = .green
-        }
-        if let throwsOrRethrowsKeyword = visitor.throwsOrRethrowsKeyword {
-            colorMapping[syntaxSlice(throwsOrRethrowsKeyword, in: source)] = .red
-        }
-        if let parameterList = visitor.parameterList {
-            // Go parameter by parameter
-//            print(parameterList.summarize())
-        }
-        if let returnType = visitor.returnType {
-            colorMapping[syntaxSlice(returnType, in: source)] = .blue
-        }
-//        print(colorize(source, with: colorMapping))
-        print(visitor.summarize())
     }
 }
 
@@ -80,11 +64,6 @@ extension SwiftDecl {
     }
 }
 
-// Given [params of type whatever], __, __, return
-// Given __, __, __, run the function body and return no value
-
-// possibly
-
 // MARK: - Error Handling
 extension SwiftDecl {
     struct RuntimeError: Error, CustomStringConvertible {
@@ -119,6 +98,7 @@ func reduce<T>(
 
 private func getAs<T: AnyObject>(_ objectType: T.Type) -> T?
 
+@main
 func foo<T: Codable, R: Codable>(_ bar: inout [T]) -> R
 """
 

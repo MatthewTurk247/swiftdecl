@@ -60,37 +60,19 @@ class FunctionVisitor: SyntaxVisitor {
     /// - Variadic parameter (optional), which accepts multiple values, denoted by `...` after its type.
     var parameterList: FunctionParameterListSyntax? // ditto
     var asyncOrReasyncKeyword: TokenSyntax?
-    /// If the function can throw an error, you use the `throws` keyword before the return arrow to indicate that.
+    /// If the function can throw an error, you use the `throws` keyword before the return arrow to specify/indicate that.
     var throwsOrRethrowsKeyword: TokenSyntax?
     /// If a function returns a value, you specify the type of the value after the return arrow.
     var returnType: TypeSyntax?
     
     var functionDecl: FunctionDeclSyntax?
-    /*
-     Function Keyword: Every function declaration starts with the func keyword.
-     Return Arrow (optional): -> This symbol indicates that the function returns a value.
 
-     Function Body: Enclosed in braces {}, this is where you write the series of statements that constitute the function's behavior.
-
-     Access modifier
-     func keyword
-     Name
-     Generic types
-     Parameters
-     Throwing specifier
-     Return type
-     Body
-     Async specifier
-     */
     private var summarizers: [FunctionDeclSyntax: FunctionSummarizer] = [:]
     var attributeDescriptions: [String] = []
     var genericRequirementDescriptions: [String] = []
     var parameterDescriptions: [String] = []
     var footnotes: [Footnote] = []
-    
-    // https://docs.swift.org/swift-book/documentation/the-swift-programming-language/attributes/
-    static let mainAttribute: String = "Indicates the top-level entry point for program flow"
-    
+        
     override func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
         // https://swiftpackageindex.com/apple/swift-syntax/509.0.2/documentation/swiftsyntax/attributesyntax
         self.functionDecl = node
@@ -109,6 +91,12 @@ class FunctionVisitor: SyntaxVisitor {
         return .visitChildren
     }
     
+    // footnotes
+    override func visit(_ node: AttributedTypeSyntax) -> SyntaxVisitorContinueKind {
+        return .visitChildren
+    }
+    
+    // footnotes
     override func visit(_ node: AttributeSyntax) -> SyntaxVisitorContinueKind {
         guard node.parent?.parent?.kind == .functionDecl else { return .skipChildren }
         guard let functionDecl else { return .visitChildren }
@@ -147,10 +135,11 @@ class FunctionVisitor: SyntaxVisitor {
         case .tokenList(let tokenListSyntax):
             break
         case .none:
-            // Will add a tooltip (the data structure is yet to be updated).
-            // These tokens will be mapped to pre-written, one-line explanations of what the attribute means.
-            // summarizers[functionDecl, default: FunctionSummarizer()].tooltips.append(tooltip)
-            break
+            // These argument-less nodes will be mapped to pre-written, one-line explanations of what the attribute means.
+            let attributeText = node.description.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let attributeDescription = Footnote.attributes[attributeText] {
+                footnotes.append(Footnote(nodeDescription: attributeText, text: attributeDescription))
+            }
         }
         
         return .visitChildren
@@ -167,9 +156,8 @@ class FunctionVisitor: SyntaxVisitor {
             // Parameter is variadic.
             parameterDescription += "an indefinite number of "
             typeDescription = String(typeDescription.dropLast(ellipsisToken.text.count))
-        } else if let inoutToken {
+        } else if inoutToken != nil {
             parameterDescription += "a non-constant "
-            //typeDescription = String(typeDescription.dropFirst(inoutToken.text.count))
         }
         // TODO: If there is a first name and second name, add a footnote explaining this.
         let parameterName = node.secondName?.text.trimmingCharacters(in: .whitespacesAndNewlines) ?? firstName.text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -179,7 +167,6 @@ class FunctionVisitor: SyntaxVisitor {
         }
         // print(node.type?.naturalLanguageDescription)
         // print(node.type?.recursiveNaturalLanguageDescription)
-        // summarizers[functionDecl]
         // footnotes.append(node.type?.recursiveNaturalLanguageDescription)
         
         summarizers[functionDecl, default: FunctionSummarizer()].parameterDescriptions.append(parameterDescription)
@@ -202,26 +189,29 @@ class FunctionVisitor: SyntaxVisitor {
         return .visitChildren
     }
     
-    func summarize() -> String {
-        var batches: [String] = []
+    // Could also use AnyIterator perhaps
+    func summarize() -> [FunctionSummarizer.Translation] {
+        var translations: [FunctionSummarizer.Translation] = []
         
         for (node, summarizer) in summarizers {
-            var batch = summarizer.summarize(node)
+            let summary = summarizer.summarize(node)
+            var batch = summary.text
             batch = String(batch.trimmingCharacters(in: CharacterSet(charactersIn: ",").union(.whitespacesAndNewlines)))
             batch += "."
-            batches.append(batch.isEmpty ? batch : (batch.prefix(1).capitalized + batch.dropFirst()))
+            translations.append(FunctionSummarizer.Translation(text: batch.isEmpty ? batch : (batch.prefix(1).capitalized + batch.dropFirst()), footnotes: summary.footnotes))
         }
 
-        return batches.joined(separator: "\n\n")
+        return translations
     }
     
-        /*
-         example:
-         A function named foo, available on macOS 13.0 and later, takes a string parameter named name, a variable number of integer values, and an optional integer parameter named age with a default value of 30, and returns a string.
-         */
-        
-    // public func getAs<T: AnyObject>(_ objectType: T.Type) -> T?
     /*
+     Return Arrow (optional): -> This symbol indicates that the function returns a value.
+     Function Body: Enclosed in braces {}, this is where you write the series of statements that constitute the function's behavior.
+     Async specifier
+
+     Examples:
+     A function named foo, available on macOS 13.0 and later, takes a string parameter named name, a variable number of integer values, and an optional integer parameter named age with a default value of 30, and returns a string.
+
      The public function named `getAs` takes a type parameter `T` that must be a class type. It takes one argument, which is the type of `T`, has no external name, and has an internal name of `objectType`. The function returns either an instance of type `T` or `nil`.
      */
 }
