@@ -20,8 +20,6 @@ extension TypeSyntaxProtocol {
     }
     
     func naturalLanguageDescription(includeChildren: Bool, preferredName: String? = nil) -> String {
-        // let functionParameter = Syntax(self.parent)?.as(FunctionParameterSyntax.self)
-        
         switch Syntax(self).as(SyntaxEnum.self) {
         case .simpleTypeIdentifier(let simpleTypeIdentifierSyntax):
             return "`\(simpleTypeIdentifierSyntax.name.text)`"
@@ -32,7 +30,15 @@ extension TypeSyntaxProtocol {
         case .arrayType(let arrayTypeSyntax):
             return "array of \(includeChildren ? arrayTypeSyntax.elementType.naturalLanguageDescription(includeChildren: true) : arrayTypeSyntax.elementType.description)"
         case .dictionaryType(let dictionaryTypeSyntax):
-            return "dictionary mapping \(includeChildren ? dictionaryTypeSyntax.keyType.naturalLanguageDescription(includeChildren: true) : dictionaryTypeSyntax.keyType.description) to \(includeChildren ? dictionaryTypeSyntax.valueType.naturalLanguageDescription(includeChildren: true) : dictionaryTypeSyntax.valueType.description)"
+            var keyPhrase = dictionaryTypeSyntax.keyType.description
+            var valuePhrase = dictionaryTypeSyntax.valueType.description
+            
+            if includeChildren {
+                keyPhrase = dictionaryTypeSyntax.keyType.naturalLanguageDescription(includeChildren: true)
+                valuePhrase = dictionaryTypeSyntax.valueType.naturalLanguageDescription(includeChildren: true)
+            }
+            
+            return "dictionary mapping \(keyPhrase) to \(valuePhrase)"
         case .metatypeType(let metatypeTypeSyntax):
             return "`\(metatypeTypeSyntax.description)`"
         case .optionalType(let optionalTypeSyntax):
