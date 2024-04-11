@@ -38,7 +38,7 @@ class SummaryComposer {
     /// If the function can throw an error, you use the `throws` keyword before the return arrow to specify/indicate that.
     var throwsOrRethrowsKeyword: TokenSyntax?
     /// If a function returns a value, you specify the type of the value after the return arrow.
-    var returnType: TypeSyntax?
+    var returnClause: ReturnClauseSyntax?
     
     var textSegments: [String] = []
     
@@ -53,7 +53,7 @@ class SummaryComposer {
         self.parameterList = node.signature.parameterClause
         self.asyncOrReasyncKeyword = node.signature.effectSpecifiers?.asyncSpecifier
         self.throwsOrRethrowsKeyword = node.signature.effectSpecifiers?.throwsSpecifier
-        self.returnType = node.signature.returnClause?.type
+        self.returnClause = node.signature.returnClause
         // node.genericParameterClause?.genericParameterList.first?.inheritedType
     }
     
@@ -81,47 +81,31 @@ class SummaryComposer {
         
         textSegments.append("function")
         
+        if let identifier {
+            textSegments.append(identifier.text.bracketed(with: "`"))
+        }
+        
         if let parameterList {
             if parameterList.parameters.isEmpty {
                 textSegments.append("takes no inputs")
             } else {
+                textSegments.append("takes inputs")
                 textSegments.append(contentsOf: parameterList.parameters.compactMap { $0.phrase })
             }
         }
         
-        if let genericWhereRequirements = genericWhereClause?.requirements {
-            
-        }
+        textSegments.append("and")
         
-        if let genericParameterList = genericParameterClause?.parameters {
-            genericParameterList.first
-            
-        }
-        
-        if let genericParameterClause {
-            var conformances: [TokenSyntax: TypeSyntax?] = [:]
-            var requirements: [TokenSyntax: GenericRequirementSyntax.Requirement?] = [:]
-            
-            for generic in genericParameterClause.parameters {
-                conformances[generic.name] = generic.inheritedType
-                generic
-            }
-            
-//            if let requirementList = genericParameterClause.genericWhereClause?.requirementList {
-//                for element in requirementList {
-//                    element.requirement
-//                }
-//            }
-//            
-//            genericParameterClause.genericParameterList.first?.inheritedType
-//            genericParameterClause.genericWhereClause?.requirementList.first
-        }
-        
-        if let requirementList = genericParameterClause?.genericWhereClause?.requirements {
-            
+        if let returnClause {
+            textSegments.append("returns output")
+            textSegments.append("of type")
+            textSegments.append(returnClause.type.naturalLanguageDescription(includeChildren: false))
+        } else {
+            textSegments.append("returns no output")
         }
                 
         if let throwsOrRethrowsKeyword {
+            textSegments.append("or")
             switch throwsOrRethrowsKeyword.tokenKind {
             case .keyword(.throws):
                 textSegments.append("throws an error")
@@ -131,6 +115,18 @@ class SummaryComposer {
                 break
             }
         }
+
+        if let genericParameterClause {
+            self.phrase(genericParameterClause)
+        }
+        
+        /*if let requirementList = genericParameterClause?.genericWhereClause?.requirements {
+            
+        }
+        
+        if let genericWhereClause {
+            textSegments.append(contentsOf: genericWhereClause.requirements.compactMap { $0.requirement.description })
+        }*/
         
         if let attributes {
             for attribute in attributes {
@@ -143,7 +139,7 @@ class SummaryComposer {
             }
         }
         
-        return Summary(text: text, tooltips: [])
+        return Summary(text: textSegments.joined(separator: " "), tooltips: [])
     }
     
     var mainClause: String {
@@ -205,12 +201,26 @@ class SummaryComposer {
             break
         }
     }
+    
+    func phrase(_ node: IfConfigDeclSyntax) {
+        
+    }
+    
+    func phrase(_ node: FunctionParameterSyntax) {
+        
+    }
+    
+    func phrase(_ node: GenericParameterClauseSyntax) {
+        textSegments.append("where")
+        textSegments.append(contentsOf: node.parameters.compactMap { element in
+            guard let inheritedType = element.inheritedType else { return nil }
+            return "\(element.name.text) conforms to \(inheritedType)"
+        })
+    }
 }
 
-extension AttributeSyntax {
-    
-}
-
-extension IfConfigDeclSyntax {
-    
+extension StringProtocol {
+    func bracketed(with bracket: String) -> String {
+        "\(bracket)\(self)\(bracket)"
+    }
 }

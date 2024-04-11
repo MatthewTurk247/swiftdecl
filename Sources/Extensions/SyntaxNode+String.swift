@@ -13,3 +13,9 @@ extension FunctionParameterListSyntax {
         self.compactMap { $0.phrase }.itemized()
     }
 }
+
+extension TypeSyntaxProtocol {
+    func naturalLanguageSegments(includeChildren: Bool, preferredName: String? = nil) -> [String] {
+        []
+    }
+}

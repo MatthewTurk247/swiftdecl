@@ -19,7 +19,7 @@ struct SwiftDecl: ParsableCommand {
         
         visitor.walk(syntaxTree)
         
-        for translation in visitor.summarize() {
+        /*for translation in visitor.summarize() {
             if json,
                let translationEncoding = try? JSONEncoder().encode(translation),
                let translationString = String(data: translationEncoding, encoding: .utf8) {
@@ -27,6 +27,11 @@ struct SwiftDecl: ParsableCommand {
             } else {
                 print(translation.text, terminator: "\n\n")
             }
+        }*/
+        
+        for (node, composer) in visitor.composers {
+            let summary = composer.compose()
+            print(summary.text)
         }
     }
 }

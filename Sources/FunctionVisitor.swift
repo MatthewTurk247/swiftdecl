@@ -37,7 +37,7 @@ class FunctionVisitor: SyntaxVisitor {
     var functionDecl: FunctionDeclSyntax?
 
     private var summarizers: [FunctionDeclSyntax: FunctionSummarizer] = [:]
-    private var composers: [FunctionDeclSyntax: SummaryComposer] = [:]
+    var composers: [FunctionDeclSyntax: SummaryComposer] = [:]
     var footnotes: [Footnote] = []
         
     override func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
