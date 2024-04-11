@@ -21,10 +21,6 @@ extension TypeSyntaxProtocol {
     
     func naturalLanguageDescription(includeChildren: Bool, preferredName: String? = nil) -> String {
         switch Syntax(self).as(SyntaxEnum.self) {
-        case .simpleTypeIdentifier(let simpleTypeIdentifierSyntax):
-            return "`\(simpleTypeIdentifierSyntax.name.text)`"
-        case .memberTypeIdentifier(let memberTypeIdentifierSyntax):
-            return "`\(memberTypeIdentifierSyntax.description)`"
         case .classRestrictionType(let classRestrictionTypeSyntax):
             return "class-constrained type"
         case .arrayType(let arrayTypeSyntax):
@@ -43,8 +39,6 @@ extension TypeSyntaxProtocol {
             return "`\(metatypeTypeSyntax.description)`"
         case .optionalType(let optionalTypeSyntax):
             return "\(includeChildren ? optionalTypeSyntax.wrappedType.naturalLanguageDescription(includeChildren: true) : optionalTypeSyntax.wrappedType.description) or nil"
-        case .constrainedSugarType(let constrainedSugarTypeSyntax):
-            return "\(constrainedSugarTypeSyntax.someOrAnySpecifier.text) \(includeChildren ? constrainedSugarTypeSyntax.baseType.naturalLanguageDescription(includeChildren: true) : constrainedSugarTypeSyntax.baseType.description)"
         case .implicitlyUnwrappedOptionalType(let implicitlyUnwrappedOptionalTypeSyntax):
             return "implicitly unwrapped optional of \(includeChildren ? implicitlyUnwrappedOptionalTypeSyntax.wrappedType.description : implicitlyUnwrappedOptionalTypeSyntax.wrappedType.naturalLanguageDescription(includeChildren: true))"
         case .compositionType(let compositionTypeSyntax):
@@ -54,16 +48,16 @@ extension TypeSyntaxProtocol {
             if let preferredName {
                 parametersName = "`\(preferredName)`"
             }
-            return "an indefinite number of \(parametersName) of type \(packExpansionTypeSyntax.patternType.naturalLanguageDescription(includeChildren: includeChildren))"
-        case .packReferenceType(let packReferenceTypeSyntax):
-            return "reference to variadic pack \(includeChildren ? packReferenceTypeSyntax.packType.naturalLanguageDescription(includeChildren: true) : packReferenceTypeSyntax.packType.description)"
+            return "an indefinite number of \(parametersName) of type \(packExpansionTypeSyntax.repetitionPattern.naturalLanguageDescription(includeChildren: includeChildren))"
+        case .packElementType(let packReferenceTypeSyntax):
+            return "reference to variadic pack \(includeChildren ? packReferenceTypeSyntax.pack.naturalLanguageDescription(includeChildren: true) : packReferenceTypeSyntax.pack.description)"
         case .tupleType(let tupleTypeSyntax):
             return "\(tupleTypeSyntax.elements.count)-tuple of \(includeChildren ? tupleTypeSyntax.elements.map { $0.type.naturalLanguageDescription(includeChildren: true) }.itemized() : tupleTypeSyntax.elements.map { $0.type.description }.itemized())"
         case .functionType(let functionTypeSyntax):
             var functionDescription = ""
             
             // Describe the arity of the function specified in the node.
-            switch functionTypeSyntax.arguments.count {
+            switch functionTypeSyntax.parameters.count {
             case 0:
                 functionDescription += "nullary"
             case 1:
@@ -73,20 +67,20 @@ extension TypeSyntaxProtocol {
             case 3:
                 functionDescription += "ternary"
             default:
-                functionDescription += "\(functionTypeSyntax.arguments.count)-ary"
+                functionDescription += "\(functionTypeSyntax.parameters.count)-ary"
             }
 
-            functionDescription += " \(functionTypeSyntax.throwsOrRethrowsKeyword == nil ? "" : "throwing ")function that returns"
+            functionDescription += " \(functionTypeSyntax.effectSpecifiers?.throwsSpecifier == nil ? "" : "throwing ")function that returns"
             
-            return "\(functionDescription) \(includeChildren ? functionTypeSyntax.returnType.naturalLanguageDescription(includeChildren: true) : "`\(functionTypeSyntax.returnType.description)`")"
+            return "\(functionDescription) \(includeChildren ? functionTypeSyntax.returnClause.type.naturalLanguageDescription(includeChildren: true) : "`\(functionTypeSyntax.returnClause.type.description)`")"
         case .attributedType(let attributedTypeSyntax):
             var attributedTypeDescription = includeChildren ? attributedTypeSyntax.baseType.naturalLanguageDescription(includeChildren: true) : "`\(attributedTypeSyntax.baseType.description)`"
-            if (attributedTypeSyntax.attributes?.first { $0.description.trimmingCharacters(in: .whitespacesAndNewlines) == "@escaping" }) != nil {
+            if (attributedTypeSyntax.attributes.first { $0.description.trimmingCharacters(in: .whitespacesAndNewlines) == "@escaping" }) != nil {
                 attributedTypeDescription += " escaping closure"
             }
             return attributedTypeDescription
         case .namedOpaqueReturnType(let namedOpaqueReturnTypeSyntax):
-            return "opaque \(includeChildren ? namedOpaqueReturnTypeSyntax.baseType.naturalLanguageDescription(includeChildren: true) : namedOpaqueReturnTypeSyntax.baseType.description)"
+            return "opaque \(includeChildren ? namedOpaqueReturnTypeSyntax.type.naturalLanguageDescription(includeChildren: true) : namedOpaqueReturnTypeSyntax.type.description)"
         default:
             return self.description
         }
@@ -94,11 +88,17 @@ extension TypeSyntaxProtocol {
 }
 
 extension FunctionParameterSyntax {
-    var phrase: String? {
-        self.type?.naturalLanguageDescription(includeChildren: false, preferredName: secondName?.text ?? firstName?.text)
+    var phrase: String {
+        self.type.naturalLanguageDescription(includeChildren: false, preferredName: secondName?.text ?? firstName.text)
     }
     
-    var recursivePhrase: String? {
-        self.type?.naturalLanguageDescription(includeChildren: true, preferredName: secondName?.text ?? firstName?.text)
+    var recursivePhrase: String {
+        self.type.naturalLanguageDescription(includeChildren: true, preferredName: secondName?.text ?? firstName.text)
+    }
+}
+
+extension SyntaxProtocol {
+    var taggedDescription: String {
+        "<span class=\"\(self.id)\">\(self.description)</span>"
     }
 }

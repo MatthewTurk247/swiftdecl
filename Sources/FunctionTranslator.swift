@@ -20,8 +20,8 @@ struct FunctionTranslator {
     
     var summary: String {
         var result = [
-            node.signature.asyncOrReasyncKeyword?.text != nil ? "asynchronous" : nil,
-            node.modifiers?.compactMap { $0.description }.joined(separator: " "),
+            node.signature.effectSpecifiers?.asyncSpecifier?.text != nil ? "asynchronous" : nil,
+            node.modifiers.compactMap { $0.description }.joined(separator: " "),
             "function named",
             "`\(node.identifier.text)`",
         ]

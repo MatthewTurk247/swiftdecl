@@ -1,7 +1,7 @@
 import ArgumentParser
 import Foundation
 import SwiftSyntax
-import SwiftSyntaxParser
+import SwiftParser
 
 struct SwiftDecl: ParsableCommand {
     @Argument(help: "Raw Swift source code or a path to a Swift file.")
@@ -14,7 +14,7 @@ struct SwiftDecl: ParsableCommand {
     
     func run() throws {
         let visitor = FunctionVisitor(viewMode: .fixedUp)
-        let syntaxTree = try SyntaxParser.parse(source: source)
+        let syntaxTree = Parser.parse(source: source)
         guard !syntaxTree.hasError else { throw InputError.invalidSource } // { throw SwiftSyntax.UnexpectedNodesSyntax }
         
         visitor.walk(syntaxTree)

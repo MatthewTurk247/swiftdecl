@@ -12,8 +12,7 @@ extension FunctionParameterListSyntax {
     func summarize() -> String {
         var result = "Parameters:\n"
         for element in self {
-            let parameter = element.cast(FunctionParameterSyntax.self)
-            result += parameter.summarize()
+            result += element.summarize()
         }
         
         return result // return self.reduce("") { $0 + $1.cast(FunctionParameterSyntax.self).summarize() }
@@ -24,20 +23,18 @@ extension FunctionParameterSyntax {
     func summarize() -> String {
         var result = ""
         
-        if let externalName = self.firstName?.text,
-           let localName = self.secondName?.text {
+        let externalName = self.firstName.text
+        if let localName = self.secondName?.text {
             result += "- \(externalName) (\(localName)): "
         } else if let localName = self.secondName?.text {
             result += "- \(localName): "
         }
         
-        if let type = self.type {
-            result += "\(type.description)"
-        }
+        result += "\(self.type.description)"
                 
         // TODO: Handle variadic arguments.
         
-        if let defaultArg = self.defaultArgument {
+        if let defaultArg = self.defaultValue {
             result += " (Default: \(defaultArg.description))"
         }
         

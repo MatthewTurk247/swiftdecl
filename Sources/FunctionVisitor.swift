@@ -38,9 +38,6 @@ class FunctionVisitor: SyntaxVisitor {
 
     private var summarizers: [FunctionDeclSyntax: FunctionSummarizer] = [:]
     private var composers: [FunctionDeclSyntax: SummaryComposer] = [:]
-    var attributeDescriptions: [String] = []
-    var genericRequirementDescriptions: [String] = []
-    var parameterDescriptions: [String] = []
     var footnotes: [Footnote] = []
         
     override func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
@@ -48,7 +45,7 @@ class FunctionVisitor: SyntaxVisitor {
         self.functionDecl = node
         self.composers[node] = SummaryComposer(node)
 
-        return .visitChildren
+        return .skipChildren
     }
     
     // footnotes
@@ -64,13 +61,13 @@ class FunctionVisitor: SyntaxVisitor {
         switch node.argument {
         case .token(let tokenSyntax):
             break
-        case .stringExpr(let stringLiteralExprSyntax):
+        case .string(let stringExprSyntax):
             break
         case .availability(let availabilitySpecListSyntax):
             // @available: Indicates the platform and version on which the declaration is available.
             // Is it possible to have multiple versions in this syntax?
             guard let spec = availabilitySpecListSyntax
-                .first(where: { $0.entry.kind == .availabilityVersionRestriction }) else { break }
+                .first(where: { $0.argument.kind == .availabilityVersionRestriction }) else { break }
             summarizers[functionDecl, default: FunctionSummarizer()].attributeDescriptions.append("available on \(spec.entry.description)")
         case .specializeArguments(let specializeAttributeSpecListSyntax):
             break
@@ -82,8 +79,6 @@ class FunctionVisitor: SyntaxVisitor {
             break
         case .derivativeRegistrationArguments(let derivativeRegistrationAttributeArgumentsSyntax):
             break
-        case .namedAttributeString(let namedAttributeStringArgumentSyntax):
-            break
         case .backDeployedArguments(let backDeployedAttributeSpecListSyntax):
             break
         case .conventionArguments(let conventionAttributeArgumentsSyntax):
@@ -92,23 +87,39 @@ class FunctionVisitor: SyntaxVisitor {
             break
         case .opaqueReturnTypeOfAttributeArguments(let opaqueReturnTypeOfAttributeArgumentsSyntax):
             break
-        case .tokenList(let tokenListSyntax):
-            break
         case .none:
             // These argument-less nodes will be mapped to pre-written, one-line explanations of what the attribute means.
             let attributeText = node.description.trimmingCharacters(in: .whitespacesAndNewlines)
             if let attributeDescription = Footnote.attributes[attributeText] {
                 footnotes.append(Footnote(nodeDescription: attributeText, text: attributeDescription))
             }
+        case .some(.argumentList(_)):
+            break
+        case .some(.exposeAttributeArguments(_)):
+            break
+        case .some(.originallyDefinedInArguments(_)):
+            break
+        case .some(.underscorePrivateAttributeArguments(_)):
+            break
+        case .some(.dynamicReplacementArguments(_)):
+            break
+        case .some(.unavailableFromAsyncArguments(_)):
+            break
+        case .some(.effectsArguments(_)):
+            break
+        case .some(.documentationArguments(_)):
+            break
         }
         
         return .visitChildren
     }
 
     override func visit(_ node: FunctionParameterSyntax) -> SyntaxVisitorContinueKind {
+        guard let functionDecl else { return .visitChildren }
         let ellipsisToken = node.tokens(viewMode: .fixedUp).first { $0.tokenKind == .ellipsis }
-        let inoutToken = node.tokens(viewMode: .fixedUp).first { $0.tokenKind == .inoutKeyword }
-        guard let firstName = node.firstName, let type = node.type, let functionDecl else { return .visitChildren }
+        let inoutToken = node.tokens(viewMode: .fixedUp).first { $0.tokenKind == .keyword(.inout) }
+        let firstName = node.firstName
+        let type = node.type
         var parameterDescription = ""
         var typeDescription = type.naturalLanguageDescription(includeChildren: false)
 
@@ -122,7 +133,7 @@ class FunctionVisitor: SyntaxVisitor {
         // TODO: If there is a first name and second name, add a footnote explaining this.
         let parameterName = node.secondName?.text.trimmingCharacters(in: .whitespacesAndNewlines) ?? firstName.text.trimmingCharacters(in: .whitespacesAndNewlines)
         parameterDescription += "`\(parameterName)` of type \(typeDescription)"
-        if let defaultArgument = node.defaultArgument {
+        if let defaultArgument = node.defaultValue {
             parameterDescription += " with default value of `\(defaultArgument.value)`"
         }
 

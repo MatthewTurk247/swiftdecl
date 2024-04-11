@@ -19,15 +19,12 @@ struct FunctionSummarizer {
         var footnotes: [Footnote] = []
         var batch = ""
 
-        if node.signature.asyncOrReasyncKeyword != nil {
+        if node.signature.effectSpecifiers?.asyncSpecifier != nil {
             batch += "asynchronous "
         }
 
-        if let modifiers = node.modifiers {
-            batch += modifiers.map { $0.description }.joined(separator: " ")
-        }
-
-        batch += "function named `\(node.identifier.text)`"
+        batch += node.modifiers.map { $0.description }.joined(separator: " ")
+        batch += "function named `\(node.name.text)`"
 
         if self.parameterDescriptions.isEmpty {
             batch += " takes no inputs"
@@ -40,14 +37,14 @@ struct FunctionSummarizer {
             batch += " \(self.parameterDescriptions.itemized())"
         }
         
-        if let output = node.signature.output {
+        if let output = node.signature.returnClause {
             batch += " and returns output of "
-            if output.returnType.kind == .optionalType {
-                batch += "`\(output.returnType.description.dropLast())` or `nil`"
+            if output.type.kind == .optionalType {
+                batch += "`\(output.type.description.dropLast())` or `nil`"
             } else {
-                batch += "`\(output.returnType)`"
+                batch += "`\(output.type)`"
             }
-            footnotes.append(Footnote(nodeDescription: output.returnType.description, text: "Returns \(output.returnType.recursiveNaturalLanguageDescription)"))
+            footnotes.append(Footnote(nodeDescription: output.type.description, text: "Returns \(output.type.recursiveNaturalLanguageDescription)"))
         } else {
             // Executes the function body and does not return anything.
             batch += " and returns no output"
@@ -58,11 +55,11 @@ struct FunctionSummarizer {
             batch += ", where \(self.genericRequirementDescriptions.itemized()),"
         }
         
-        if let throwsKeyword = node.signature.throwsOrRethrowsKeyword {
+        if let throwsKeyword = node.signature.effectSpecifiers?.throwsSpecifier {
             switch throwsKeyword.tokenKind {
-            case .throwsKeyword:
+            case .keyword(.throws):
                 batch += " or throws an error"
-            case .rethrowsKeyword:
+            case .keyword(.rethrows):
                 batch += " or throws an error if its input function throws an error"
             default:
                 break
