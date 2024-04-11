@@ -83,7 +83,7 @@ extension TypeSyntaxProtocol {
             return "opaque \(includeChildren ? namedOpaqueReturnTypeSyntax.type.naturalLanguageDescription(includeChildren: true) : namedOpaqueReturnTypeSyntax.type.description)"
         default:
             if let preferredName {
-                return "\(preferredName.bracketed(with: "`")) of type \(self.description)"
+                return "\(preferredName.backticked) of type \(self.description)"
             }
             return self.description
         }

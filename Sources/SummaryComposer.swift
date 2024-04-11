@@ -54,23 +54,12 @@ class SummaryComposer {
         self.asyncOrReasyncKeyword = node.signature.effectSpecifiers?.asyncSpecifier
         self.throwsOrRethrowsKeyword = node.signature.effectSpecifiers?.throwsSpecifier
         self.returnClause = node.signature.returnClause
-        // node.genericParameterClause?.genericParameterList.first?.inheritedType
     }
     
-    /*func compose() -> Summary {
-        let attributes: [NSAttributedString.Key: Any] = [
-            NSAttributedString.Key("data-tooltip-target"): "syntax node id here or smth"
-        ]
-        // annotatedText: NSAttributedString(string: "")
-        // https://forums.developer.apple.com/forums/thread/682431
-        
-        return Summary(text: "", tooltips: [])
-    }*/
+    // annotatedText: NSAttributedString(string: "")
+    // https://forums.developer.apple.com/forums/thread/682431
     
-    func compose() -> Summary {
-        var text = ""
-        var html = ""
-        
+    func compose() -> Summary {        
         if self.asyncOrReasyncKeyword != nil {
             textSegments.append("asynchronous")
         }
@@ -79,27 +68,20 @@ class SummaryComposer {
             textSegments.append(contentsOf: modifiers.compactMap { $0.detail?.detail.text })
         }
         
-        textSegments.append("function")
+        textSegments.append("function named")
         
         if let identifier {
-            textSegments.append(identifier.text.bracketed(with: "`"))
+            textSegments.append(identifier.text.backticked)
         }
         
         if let parameterList {
-            if parameterList.parameters.isEmpty {
-                textSegments.append("takes no inputs")
-            } else {
-                textSegments.append("takes inputs")
-                textSegments.append(contentsOf: parameterList.parameters.compactMap { $0.phrase })
-            }
+            self.phrase(parameterList)
         }
         
         textSegments.append("and")
         
         if let returnClause {
-            textSegments.append("returns output")
-            textSegments.append("of type")
-            textSegments.append(returnClause.type.naturalLanguageDescription(includeChildren: false))
+            self.phrase(returnClause)
         } else {
             textSegments.append("returns no output")
         }
@@ -129,26 +111,10 @@ class SummaryComposer {
         }*/
         
         if let attributes {
-            for attribute in attributes {
-                switch attribute {
-                case .attribute(let attributeSyntax):
-                    self.phrase(attributeSyntax)
-                case .ifConfigDecl(let ifConfigDeclSyntax):
-                    break
-                }
-            }
+            self.phrase(attributes)
         }
         
-        return Summary(text: textSegments.joined(separator: " "), tooltips: [])
-    }
-    
-    var mainClause: String {
-        var result = ""
-        if self.asyncOrReasyncKeyword != nil {
-            result += "asynchronous"
-        }
-        
-        return result
+        return Summary(text: textSegments.joined(separator: " "), html: "", tooltips: [])
     }
     
     func phrase(_ node: AttributeSyntax) {
@@ -212,15 +178,46 @@ class SummaryComposer {
     
     func phrase(_ node: GenericParameterClauseSyntax) {
         textSegments.append("where")
-        textSegments.append(contentsOf: node.parameters.compactMap { element in
-            guard let inheritedType = element.inheritedType else { return nil }
-            return "\(element.name.text) conforms to \(inheritedType)"
+        textSegments.append(contentsOf: node.parameters.compactMap { parameter in
+            guard let inheritedType = parameter.inheritedType else { return nil }
+            return "\(parameter.name.text) conforms to \(inheritedType)"
         })
+    }
+    
+    func phrase(_ node: FunctionParameterClauseSyntax) {
+        if node.parameters.isEmpty {
+            textSegments.append("takes no inputs")
+        } else {
+            textSegments.append(node.parameters.count == 1 ? "takes input" : "takes inputs")
+            textSegments.append(contentsOf: node.parameters.compactMap { $0.phrase })
+        }
+    }
+    
+    func phrase(_ node: ReturnClauseSyntax) {
+        textSegments.append("returns output")
+        textSegments.append("of type")
+        textSegments.append(node.type.naturalLanguageDescription(includeChildren: false))
+    }
+    
+    func phrase(_ node: AttributeListSyntax) {
+        // e.g., "It is available on macOS 13.0."
+        for attribute in node {
+            switch attribute {
+            case .attribute(let attributeSyntax):
+                self.phrase(attributeSyntax)
+            case .ifConfigDecl(let ifConfigDeclSyntax):
+                break
+            }
+        }
     }
 }
 
 extension StringProtocol {
     func bracketed(with bracket: String) -> String {
         "\(bracket)\(self)\(bracket)"
+    }
+    
+    var backticked: String {
+        self.bracketed(with: "`")
     }
 }

@@ -9,5 +9,6 @@ import Foundation
 
 struct Summary {
     let text: String
+    let html: String
     let tooltips: [Tooltip]
 }

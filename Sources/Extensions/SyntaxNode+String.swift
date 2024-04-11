@@ -16,6 +16,13 @@ extension FunctionParameterListSyntax {
 
 extension TypeSyntaxProtocol {
     func naturalLanguageSegments(includeChildren: Bool, preferredName: String? = nil) -> [String] {
-        []
+        switch Syntax(self).as(SyntaxEnum.self) {
+        case .classRestrictionType(let classRestrictionTypeSyntax):
+            return ["class-constrained type"]
+        case .arrayType(let arrayTypeSyntax):
+            return ["array of"] + (includeChildren ? arrayTypeSyntax.element.naturalLanguageSegments(includeChildren: true) : [arrayTypeSyntax.element.description])
+        default:
+            return [self.description]
+        }
     }
 }

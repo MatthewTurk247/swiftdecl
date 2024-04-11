@@ -29,9 +29,9 @@ struct SwiftDecl: ParsableCommand {
             }
         }*/
         
-        for (node, composer) in visitor.composers {
+        for composer in visitor.composers.values {
             let summary = composer.compose()
-            print(summary.text)
+            print(summary.text, terminator: "\n\n")
         }
     }
 }
