@@ -59,7 +59,7 @@ class SummaryComposer {
     // annotatedText: NSAttributedString(string: "")
     // https://forums.developer.apple.com/forums/thread/682431
     
-    func compose() -> Summary {        
+    func compose() -> Summary {
         if self.asyncOrReasyncKeyword != nil {
             textSegments.append("asynchronous")
         }
@@ -177,10 +177,14 @@ class SummaryComposer {
     }
     
     func phrase(_ node: GenericParameterClauseSyntax) {
-        textSegments.append("where")
+        guard let recent = textSegments.dropLast().first else { return }
+        textSegments.append(recent + ", where")
         textSegments.append(contentsOf: node.parameters.compactMap { parameter in
-            guard let inheritedType = parameter.inheritedType else { return nil }
-            return "\(parameter.name.text) conforms to \(inheritedType)"
+            if let inheritedType = parameter.inheritedType {
+                return "\(parameter.name.text.backticked) conforms to \(inheritedType)"
+            }
+            
+            return "\(parameter.name.text.backticked) can be any type"
         })
     }
     

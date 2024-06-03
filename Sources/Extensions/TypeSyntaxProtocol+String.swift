@@ -38,7 +38,7 @@ extension TypeSyntaxProtocol {
         case .metatypeType(let metatypeTypeSyntax):
             return "`\(metatypeTypeSyntax.description)`"
         case .optionalType(let optionalTypeSyntax):
-            return "\(includeChildren ? optionalTypeSyntax.wrappedType.naturalLanguageDescription(includeChildren: true) : optionalTypeSyntax.wrappedType.description) or nil"
+            return "\(includeChildren ? optionalTypeSyntax.wrappedType.naturalLanguageDescription(includeChildren: true) : optionalTypeSyntax.wrappedType.description.backticked) or `nil`"
         case .implicitlyUnwrappedOptionalType(let implicitlyUnwrappedOptionalTypeSyntax):
             return "implicitly unwrapped optional of \(includeChildren ? implicitlyUnwrappedOptionalTypeSyntax.wrappedType.description : implicitlyUnwrappedOptionalTypeSyntax.wrappedType.naturalLanguageDescription(includeChildren: true))"
         case .compositionType(let compositionTypeSyntax):
@@ -83,9 +83,90 @@ extension TypeSyntaxProtocol {
             return "opaque \(includeChildren ? namedOpaqueReturnTypeSyntax.type.naturalLanguageDescription(includeChildren: true) : namedOpaqueReturnTypeSyntax.type.description)"
         default:
             if let preferredName {
-                return "\(preferredName.backticked) of type \(self.description)"
+                return "\(preferredName.backticked) of type \(self.description.backticked)"
             }
             return self.description
+        }
+    }
+}
+
+extension TypeSyntaxProtocol {
+    func naturalLanguageSegments(includeChildren: Bool, preferredName: String? = nil) -> [String] {
+        switch Syntax(self).as(SyntaxEnum.self) {
+        case .classRestrictionType(let classRestrictionTypeSyntax):
+            return ["class-constrained type"]
+        case .arrayType(let arrayTypeSyntax):
+            return ["array of"] + (includeChildren ? arrayTypeSyntax.element.naturalLanguageSegments(includeChildren: true) : [arrayTypeSyntax.element.description])
+        case .dictionaryType(let dictionaryTypeSyntax):
+            var keyPhrase = [dictionaryTypeSyntax.key.description]
+            var valuePhrase = [dictionaryTypeSyntax.value.description]
+            
+            if includeChildren {
+                keyPhrase = dictionaryTypeSyntax.key.naturalLanguageSegments(includeChildren: true)
+                valuePhrase = dictionaryTypeSyntax.value.naturalLanguageSegments(includeChildren: true)
+            }
+            
+            return ["dictionary mapping"] + keyPhrase + ["to"] + valuePhrase
+        case .metatypeType(let metatypeTypeSyntax):
+            return [metatypeTypeSyntax.description.backticked]
+        case .optionalType(let optionalTypeSyntax):
+            return includeChildren ? optionalTypeSyntax.wrappedType.naturalLanguageSegments(includeChildren: true) : [optionalTypeSyntax.wrappedType.description.backticked, "or nil"]
+        default:
+            return [self.description]
+        }
+    }
+    
+    func naturalLanguageP() -> any CustomStringConvertible {
+        switch Syntax(self).as(SyntaxEnum.self) {
+        case .classRestrictionType(let classRestrictionTypeSyntax):
+            return classRestrictionTypeSyntax.phrase
+        case .arrayType(let arrayTypeSyntax):
+            return arrayTypeSyntax.phrase
+        case .dictionaryType(let dictionaryTypeSyntax):
+            return dictionaryTypeSyntax.phrase
+        default:
+            return ""
+        }
+    }
+}
+
+extension DictionaryTypeSyntax {
+    var phrase: Phrase {
+        Phrase(keyDescription: self.key.description, valueDescription: self.value.description)
+    }
+    
+    struct Phrase: CustomStringConvertible {
+        let keyDescription: String
+        let valueDescription: String
+        
+        var description: String {
+            "dictionary mapping \(keyDescription) to \(valueDescription)"
+        }
+    }
+}
+
+extension ClassRestrictionTypeSyntax {
+    var phrase: Phrase {
+        Phrase()
+    }
+    
+    struct Phrase: CustomStringConvertible {
+        var description: String {
+            ""
+        }
+    }
+}
+
+extension ArrayTypeSyntax {
+    var phrase: Phrase {
+        Phrase(elementPhrase: self.element.description)
+    }
+    
+    struct Phrase: CustomStringConvertible {
+        let elementPhrase: String
+        
+        var description: String {
+            "array of \(elementPhrase)"
         }
     }
 }

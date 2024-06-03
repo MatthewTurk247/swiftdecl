@@ -29,6 +29,16 @@ struct SwiftDecl: ParsableCommand {
             }
         }*/
         
+        let result = TokenSyntax.Summary {
+            "smth"
+            "another"
+            if let funcKeyword = visitor.functionDecl?.funcKeyword {
+                funcKeyword
+            }
+        }
+        
+        print(result.render())
+        
         for composer in visitor.composers.values {
             let summary = composer.compose()
             print(summary.text, terminator: "\n\n")
