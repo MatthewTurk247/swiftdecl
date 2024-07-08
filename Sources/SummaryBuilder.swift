@@ -114,7 +114,7 @@ struct Conjunction: SummaryProtocol {
 //    }
 //    
     func render() -> String {
-        content().map { $0.render() }.joined(separator: " ")
+        content().map { $0.render() }.itemized()
     }
 }
 
@@ -146,30 +146,32 @@ extension String: SummaryProtocol {
 
 struct InputPhrase: SummaryProtocol {
     var tooltips: [Tooltip] = []
+    private let node: FunctionParameterListSyntax
+    @TextSegmentBuilder
+    var content: (_ parameter: FunctionParameterSyntax) -> [any SummaryProtocol]
     
-    func render() -> String {
-        self.node.parameters.map { $0.type.recursiveNaturalLanguageDescription }.itemized()
+    init(_ node: FunctionParameterListSyntax, @TextSegmentBuilder content: @escaping (_ parameter: FunctionParameterSyntax) -> [any SummaryProtocol]) {
+        self.node = node
+        self.content = content
     }
     
-    private let node: FunctionParameterClauseSyntax
-    
-    init(_ node: FunctionParameterClauseSyntax) {
-        self.node = node
-        print(node.parameters.first?.type.recursiveNaturalLanguageDescription)
+    func render() -> String {
+        // maybe could reuse Conjunction here or smth
+        "takes input " + node.flatMap { content($0) }.map { $0.render() }.joined(separator: " ")
     }
 }
 
-struct OutputPhrase: SummaryProtocol, CustomStringConvertible {
+struct OutputPhrase: SummaryProtocol {
     var tooltips: [Tooltip] = []
     
     func render() -> String {
-        ""
+        "returns \(self.node.type.recursiveNaturalLanguageDescription)"
     }
     
-    var description: String
+    private let node: ReturnClauseSyntax
     
     init(_ node: ReturnClauseSyntax) {
-        self.description = ""
+        self.node = node
     }
 }
 

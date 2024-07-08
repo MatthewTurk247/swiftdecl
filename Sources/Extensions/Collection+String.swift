@@ -9,6 +9,7 @@ import Foundation
 
 extension Collection where Element: CustomStringConvertible {
     func itemized() -> String {
+        // could add parameter to customize separator and conjunct or smth like that
         switch self.count {
         case 0:
             return ""

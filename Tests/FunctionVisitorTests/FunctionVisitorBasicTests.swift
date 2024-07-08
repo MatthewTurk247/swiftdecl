@@ -23,7 +23,9 @@ class FunctionVisitorBasicTests: XCTestCase {
             "function"
             functionDecl.name.text.backticked
             Conjunction {
-                InputPhrase(functionDecl.signature.parameterClause)
+                InputPhrase(functionDecl.signature.parameterClause.parameters) { parameter in
+                    parameter.type.naturalLanguageDescription(includeChildren: false, preferredName: parameter.firstName.text)
+                }
                 Disjunction {
                     if let returnClause = functionDecl.signature.returnClause {
                         OutputPhrase(returnClause)
