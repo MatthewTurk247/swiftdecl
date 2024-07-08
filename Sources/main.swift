@@ -46,6 +46,11 @@ struct SwiftDecl: ParsableCommand {
     }
 }
 
+@_cdecl("add")
+func add(_ lhs: Int, _ rhs: Int) -> Int {
+    return lhs + rhs
+}
+
 // MARK: - Helper Functions
 extension SwiftDecl {
     func colorize(_ text: String, with mappings: [Range<String.Index>: ANSI]) -> String {

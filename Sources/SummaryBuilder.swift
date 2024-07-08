@@ -58,14 +58,29 @@ struct ParsedSummary: SummaryProtocol {
 
 struct NounPhrase: SummaryProtocol {
     var tooltips: [Tooltip] = []
-    var node: FunctionParameterClauseSyntax
+//    var node: FunctionParameterClauseSyntax
+    var description: String
     
     init(_ node: FunctionParameterClauseSyntax) {
-        self.node = node
+//        self.node = node
+        self.description = "[placeholder]"
+    }
+    
+    init(_ node: FunctionParameterListSyntax) {
+        self.description = "takes input"
+        
+        if node.count > 1 {
+            self.description += "s"
+        }
+    }
+    
+    init(_ node: ReturnClauseSyntax) {
+        self.description = "returns"
     }
     
     func render() -> String {
-        node.parameters.itemized()
+//        node.parameters.itemized()
+        description
     }
 }
 
@@ -87,6 +102,38 @@ extension TokenSyntax {
     }
 }
 
+struct Conjunction: SummaryProtocol {
+    var tooltips: [Tooltip] = []
+    
+    @TextSegmentBuilder
+    var content: () -> [any SummaryProtocol]
+    
+//    init(tooltips: [Tooltip] = [], content: @escaping () -> [any SummaryProtocol]) {
+//        self.tooltips = tooltips
+//        self.content = content
+//    }
+//    
+    func render() -> String {
+        content().map { $0.render() }.joined(separator: " ")
+    }
+}
+
+struct Disjunction: SummaryProtocol {
+    var tooltips: [Tooltip] = []
+    
+    @TextSegmentBuilder
+    var content: () -> [any SummaryProtocol]
+    
+//    init(tooltips: [Tooltip] = [], content: @escaping () -> [any SummaryProtocol]) {
+//        self.tooltips = tooltips
+//        self.content = content
+//    }
+    
+    func render() -> String {
+        content().map { $0.render() }.joined(separator: " ")
+    }
+}
+
 extension String: SummaryProtocol {
     func render() -> String {
         self
@@ -94,6 +141,23 @@ extension String: SummaryProtocol {
     
     var tooltips: [Tooltip] {
         []
+    }
+}
+
+struct VerbPhrase: SummaryProtocol, CustomStringConvertible {
+    var tooltips: [Tooltip] = []
+    var description: String = ""
+    @TextSegmentBuilder
+    var content: () -> [any SummaryProtocol]
+    
+//    init(_ description: String, tooltips: [Tooltip] = [], content: @escaping () -> [any SummaryProtocol]) {
+//        self.tooltips = tooltips
+//        self.description = description
+//        self.content = content
+//    }
+    
+    func render() -> String {
+        description + content().map { $0.render() }.joined(separator: " ")
     }
 }
 
