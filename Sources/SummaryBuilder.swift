@@ -144,20 +144,62 @@ extension String: SummaryProtocol {
     }
 }
 
-struct VerbPhrase: SummaryProtocol, CustomStringConvertible {
+struct InputPhrase: SummaryProtocol, CustomStringConvertible {
     var tooltips: [Tooltip] = []
-    var description: String = ""
-    @TextSegmentBuilder
-    var content: () -> [any SummaryProtocol]
-    
-//    init(_ description: String, tooltips: [Tooltip] = [], content: @escaping () -> [any SummaryProtocol]) {
-//        self.tooltips = tooltips
-//        self.description = description
-//        self.content = content
-//    }
     
     func render() -> String {
-        description + content().map { $0.render() }.joined(separator: " ")
+        ""
+    }
+    
+    var description: String
+    
+    init(_ node: FunctionParameterClauseSyntax) {
+        self.description = ""
+    }
+}
+
+struct OutputPhrase: SummaryProtocol, CustomStringConvertible {
+    var tooltips: [Tooltip] = []
+    
+    func render() -> String {
+        ""
+    }
+    
+    var description: String
+    
+    init(_ node: ReturnClauseSyntax) {
+        self.description = ""
+    }
+}
+
+struct ErrorPhrase: SummaryProtocol, CustomStringConvertible {
+    var tooltips: [Tooltip] = []
+    
+    func render() -> String {
+        ""
+    }
+    
+    var description: String
+    
+    init(_ node: ThrowStmtSyntax) {
+        self.description = ""
+    }
+}
+
+struct VerbPhrase: SummaryProtocol, CustomStringConvertible {
+    var tooltips: [Tooltip] = []
+    var description: String
+    
+    init(_ node: FunctionSignatureSyntax) {
+        self.description = "takes input"
+        
+        if node.parameterClause.parameters.count != 1 {
+            self.description += "s"
+        }
+    }
+    
+    func render() -> String {
+        description
     }
 }
 

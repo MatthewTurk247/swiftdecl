@@ -23,19 +23,28 @@ class FunctionVisitorBasicTests: XCTestCase {
             "function"
             functionDecl.name.text.backticked
             Conjunction {
-                VerbPhrase(description: "takes") {
-                        functionDecl.signature.parameterClause.parameters.count == 1 ? "input" : "inputs"
-                        NounPhrase(functionDecl.signature.parameterClause)
-                }
+                InputPhrase(functionDecl.signature.parameterClause)
                 Disjunction {
-                    VerbPhrase(description: "returns") {
-                        ""
+                    if let returnClause = functionDecl.signature.returnClause {
+                        OutputPhrase(returnClause)
+                    } else {
+                        // Executes the function body and does not return anything.
+                        "returns no output"
                     }
-                    VerbPhrase(description: "throws") {
-                        ""
+                    
+                    if let throwsSpecifier = functionDecl.signature.effectSpecifiers?.throwsSpecifier {
+                        // ErrorPhrase(throwsSpecifier)
                     }
                 }
                 // if generics, RelativePhrase here
+                if let genericParameterClause = functionDecl.genericParameterClause,
+                   let genericWhereClause = functionDecl.genericWhereClause {
+                    
+                } else if let genericParameterClause = functionDecl.genericParameterClause {
+                    
+                }
+                
+                // or maybe RelativePhrase has initializer with genericParameterClause and optional genericWhereClause
             }
         }.render()
         print(summary)
