@@ -144,17 +144,18 @@ extension String: SummaryProtocol {
     }
 }
 
-struct InputPhrase: SummaryProtocol, CustomStringConvertible {
+struct InputPhrase: SummaryProtocol {
     var tooltips: [Tooltip] = []
     
     func render() -> String {
-        ""
+        self.node.parameters.map { $0.type.recursiveNaturalLanguageDescription }.itemized()
     }
     
-    var description: String
+    private let node: FunctionParameterClauseSyntax
     
     init(_ node: FunctionParameterClauseSyntax) {
-        self.description = ""
+        self.node = node
+        print(node.parameters.first?.type.recursiveNaturalLanguageDescription)
     }
 }
 
@@ -181,8 +182,12 @@ struct ErrorPhrase: SummaryProtocol, CustomStringConvertible {
     
     var description: String
     
-    init(_ node: ThrowStmtSyntax) {
-        self.description = ""
+    @TextSegmentBuilder
+    var content: () -> [any SummaryProtocol]
+    
+    init(description: String, @TextSegmentBuilder content: @escaping () -> [any SummaryProtocol]) {
+        self.description = description
+        self.content = content
     }
 }
 

@@ -46,7 +46,7 @@ extension TypeSyntaxProtocol {
         case .packExpansionType(let packExpansionTypeSyntax):
             var parametersName = "parameters"
             if let preferredName {
-                parametersName = "`\(preferredName)`"
+                parametersName = preferredName.backticked
             }
             return "an indefinite number of \(parametersName) of type \(packExpansionTypeSyntax.repetitionPattern.naturalLanguageDescription(includeChildren: includeChildren))"
         case .packElementType(let packReferenceTypeSyntax):

@@ -14,7 +14,7 @@ import XCTest
 class FunctionVisitorBasicTests: XCTestCase {
     func testSimpleFunctionParsing() {
         let visitor = FunctionVisitor(viewMode: .fixedUp)
-        let syntaxTree = Parser.parse(source: "func foo(n: Int) -> Int")
+        let syntaxTree = Parser.parse(source: "static func buildLimitedAvailability<W, C1, C2>(_ component: some RegexComponent) -> Regex<(Substring, C1?, C2?)>")
         visitor.walk(syntaxTree)
         XCTAssertNotNil(visitor.functionDecl)
         guard let functionDecl = visitor.functionDecl else { return }
@@ -33,7 +33,15 @@ class FunctionVisitorBasicTests: XCTestCase {
                     }
                     
                     if let throwsSpecifier = functionDecl.signature.effectSpecifiers?.throwsSpecifier {
-                        // ErrorPhrase(throwsSpecifier)
+                        switch throwsSpecifier.tokenKind {
+                        case .keyword(.rethrows):
+                            "throws an error if its input closure throws an error"
+                        default:
+                            "throws an error"
+                        }
+                    }
+                    ErrorPhrase(description: "") {
+                        "smth"
                     }
                 }
                 // if generics, RelativePhrase here
