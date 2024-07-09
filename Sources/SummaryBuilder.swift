@@ -52,9 +52,14 @@ struct ParsedSummary: SummaryProtocol {
     var content: () -> [any SummaryProtocol]
     
     func render() -> String {
-        content().map { $0.render() }.joined(separator: " ")
+        let result = content().map { $0.render() }.joined(separator: " ")
+        guard let firstUppercased = result.first?.uppercased() else { return result }
+        
+        return "\(firstUppercased)\(result.dropFirst().trimmingCharacters(in: .whitespacesAndNewlines))."
     }
 }
+
+// TODO: Add struct for AvailabilitySummary, which, in practice, will be a sentence that follows the ParsedSummary sentence.
 
 struct NounPhrase: SummaryProtocol {
     var tooltips: [Tooltip] = []
@@ -157,7 +162,7 @@ struct InputPhrase: SummaryProtocol {
     
     func render() -> String {
         // maybe could reuse Conjunction here or smth
-        "takes input " + node.flatMap { content($0) }.map { $0.render() }.joined(separator: " ")
+        "takes input " + node.flatMap { content($0) }.map { $0.render() }.itemized()
     }
 }
 

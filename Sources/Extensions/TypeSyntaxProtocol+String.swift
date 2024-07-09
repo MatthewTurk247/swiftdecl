@@ -91,31 +91,6 @@ extension TypeSyntaxProtocol {
 }
 
 extension TypeSyntaxProtocol {
-    func naturalLanguageSegments(includeChildren: Bool, preferredName: String? = nil) -> [String] {
-        switch Syntax(self).as(SyntaxEnum.self) {
-        case .classRestrictionType(let classRestrictionTypeSyntax):
-            return ["class-constrained type"]
-        case .arrayType(let arrayTypeSyntax):
-            return ["array of"] + (includeChildren ? arrayTypeSyntax.element.naturalLanguageSegments(includeChildren: true) : [arrayTypeSyntax.element.description])
-        case .dictionaryType(let dictionaryTypeSyntax):
-            var keyPhrase = [dictionaryTypeSyntax.key.description]
-            var valuePhrase = [dictionaryTypeSyntax.value.description]
-            
-            if includeChildren {
-                keyPhrase = dictionaryTypeSyntax.key.naturalLanguageSegments(includeChildren: true)
-                valuePhrase = dictionaryTypeSyntax.value.naturalLanguageSegments(includeChildren: true)
-            }
-            
-            return ["dictionary mapping"] + keyPhrase + ["to"] + valuePhrase
-        case .metatypeType(let metatypeTypeSyntax):
-            return [metatypeTypeSyntax.description.backticked]
-        case .optionalType(let optionalTypeSyntax):
-            return includeChildren ? optionalTypeSyntax.wrappedType.naturalLanguageSegments(includeChildren: true) : [optionalTypeSyntax.wrappedType.description.backticked, "or nil"]
-        default:
-            return [self.description]
-        }
-    }
-    
     func naturalLanguageP() -> any CustomStringConvertible {
         switch Syntax(self).as(SyntaxEnum.self) {
         case .classRestrictionType(let classRestrictionTypeSyntax):

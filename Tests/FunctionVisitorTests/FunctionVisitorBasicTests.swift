@@ -14,17 +14,23 @@ import XCTest
 class FunctionVisitorBasicTests: XCTestCase {
     func testSimpleFunctionParsing() {
         let visitor = FunctionVisitor(viewMode: .fixedUp)
-        let syntaxTree = Parser.parse(source: "static func buildLimitedAvailability<W, C1, C2>(_ component: some RegexComponent) -> Regex<(Substring, C1?, C2?)>")
+        let syntaxTree = Parser.parse(source: "func snapshot(for configuration: ConfigurationAppIntent, in context: Context) async -> SimpleEntry")
         visitor.walk(syntaxTree)
         XCTAssertNotNil(visitor.functionDecl)
         guard let functionDecl = visitor.functionDecl else { return }
         
         let summary = ParsedSummary {
+            if (functionDecl.signature.effectSpecifiers?.asyncSpecifier) != nil {
+                "asynchronous"
+            }
+            if let firstModifer = functionDecl.modifiers.first {
+                firstModifer.name.text
+            }
             "function"
             functionDecl.name.text.backticked
             Conjunction {
                 InputPhrase(functionDecl.signature.parameterClause.parameters) { parameter in
-                    parameter.type.naturalLanguageDescription(includeChildren: false, preferredName: parameter.firstName.text)
+                    parameter.type.naturalLanguageDescription(includeChildren: false, preferredName: parameter.secondName?.text ?? parameter.firstName.text)
                 }
                 Disjunction {
                     if let returnClause = functionDecl.signature.returnClause {
@@ -33,15 +39,13 @@ class FunctionVisitorBasicTests: XCTestCase {
                         // Executes the function body and does not return anything.
                         "returns no output"
                     }
-                    
-                    if let throwsSpecifier = functionDecl.signature.effectSpecifiers?.throwsSpecifier {
-                        switch throwsSpecifier.tokenKind {
-                        case .keyword(.rethrows):
-                            "throws an error if its input closure throws an error"
-                        default:
-                            "throws an error"
-                        }
+
+                    if functionDecl.signature.effectSpecifiers?.throwsSpecifier?.tokenKind == .keyword(.throws) {
+                        "throws an error"
+                    } else if functionDecl.signature.effectSpecifiers?.throwsSpecifier?.tokenKind == .keyword(.rethrows) {
+                        "throws an error if its input closure throws an error"
                     }
+                    
                     ErrorPhrase(description: "") {
                         "smth"
                     }

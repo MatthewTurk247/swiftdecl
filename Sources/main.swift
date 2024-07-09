@@ -120,6 +120,27 @@ private func getAs<T: AnyObject>(_ objectType: T.Type) -> T?
 
 @main
 func foo<T: Codable, R: Codable>(_ bar: inout [T]) -> R
+
+func compactMap<T>(_ transform: @escaping (Self.Output) -> T?) -> Publishers.CompactMap<Self, T>
+
+static func buildLimitedAvailability<W, C1, C2>(_ component: some RegexComponent) -> Regex<(Substring, C1?, C2?)>
 """
+
+/*
+ example build commands for WebAssembly
+ (also, remember to set the proper Swift toolchain)
+ https://book.swiftwasm.org/getting-started/setup.html
+ 
+ swift build -target --triple wasm32-unknown-wasi \
+ -parse-as-library \
+     main.swift -o swiftdecl.wasm \
+     -Xlinker --export=add \
+     -Xclang-linker -mexec-model=reactor
+
+ swift build --triple wasm32-unknown-wasi -Xswiftc -Osize --build-path ~/Desktop/swiftdecl-output
+
+ swift build --triple wasm32-unknown-wasi -Xswiftc -Osize -Xlinker --export=add \
+     -Xclang-linker -mexec-model=reactor --build-path ~/Desktop/swiftdecl-output
+ */
 
 SwiftDecl.main([source])
