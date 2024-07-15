@@ -51,6 +51,30 @@ func add(_ lhs: Int, _ rhs: Int) -> Int {
     return lhs + rhs
 }
 
+//@_cdecl("summarize")
+//func summarize(_ source: String) -> [String] {
+//    let visitor = FunctionVisitor(viewMode: .fixedUp)
+//    let syntaxTree = Parser.parse(source: String(source))
+//    guard !syntaxTree.hasError else { return [] }
+//    visitor.walk(syntaxTree)
+//    
+//    return visitor.composers.values.map { $0.compose().text }
+//}
+
+@_cdecl("summarize")
+func summarize(_ source: Int) -> Int {
+    let visitor = FunctionVisitor(viewMode: .fixedUp)
+    let syntaxTree = Parser.parse(source: source == 42 ? "func foo(n: Int)" : "func bar(n: Int, k: Int) -> String")
+    guard !syntaxTree.hasError else {
+        print("some kinda error")
+        return -1
+    }
+    
+    visitor.walk(syntaxTree)
+    
+    return visitor.functionDecl?.signature.parameterClause.parameters.count ?? 0
+}
+
 // MARK: - Helper Functions
 extension SwiftDecl {
     func colorize(_ text: String, with mappings: [Range<String.Index>: ANSI]) -> String {

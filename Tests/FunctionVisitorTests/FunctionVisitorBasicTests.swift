@@ -67,5 +67,7 @@ class FunctionVisitorBasicTests: XCTestCase {
     }
 }
 
+// Conjunction could be kinda like for each and then `{ item in ... }`
+
 // Conjunction(functionDecl.signature.parameterClause)
 
