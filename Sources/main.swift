@@ -62,17 +62,37 @@ func add(_ lhs: Int, _ rhs: Int) -> Int {
 //}
 
 @_cdecl("summarize")
-func summarize(_ source: Int) -> Int {
+func summarize(_ source: String) -> UnsafeMutableRawPointer {
     let visitor = FunctionVisitor(viewMode: .fixedUp)
-    let syntaxTree = Parser.parse(source: source == 42 ? "func foo(n: Int)" : "func bar(n: Int, k: Int) -> String")
-    guard !syntaxTree.hasError else {
-        print("some kinda error")
-        return -1
-    }
+    let syntaxTree = Parser.parse(source: source)
     
     visitor.walk(syntaxTree)
     
-    return visitor.functionDecl?.signature.parameterClause.parameters.count ?? 0
+    var text = "Hello, world!"
+    
+//    for composer in visitor.composers.values {
+//        let summary = composer.compose()
+//        text += summary.text
+//        text += "\n\n"
+//    }
+    //guard let text = visitor.summarize().first?.text else { return UnsafeMutableRawPointer(UnsafeMutablePointer<UInt8>.allocate(capacity: 0)) }
+    
+    let data = text.compactMap { $0.asciiValue } //[UInt8](repeating: 0, count: 1024)
+    let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: data.count)
+    pointer.initialize(from: data, count: data.count)
+    
+    return UnsafeMutableRawPointer(pointer)
+
+    
+  //  return source // visitor.functionDecl?.signature.parameterClause.parameters.count ?? 0
+}
+
+@_cdecl("generateData")
+public func generateData() -> UnsafeMutableRawPointer {
+    let data = [UInt8](repeating: 0, count: 1024)
+    let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: data.count)
+    pointer.initialize(from: data, count: data.count)
+    return UnsafeMutableRawPointer(pointer)
 }
 
 // MARK: - Helper Functions
@@ -120,6 +140,22 @@ extension SwiftDecl {
     
     enum InputError: Error {
         case invalidSource
+    }
+}
+
+extension String {
+    func stringToBinary() -> String {
+        let st = self
+        var result = ""
+        for char in st.utf8 {
+            var tranformed = String(char, radix: 2)
+            while tranformed.count < 8 {
+                tranformed = "0" + tranformed
+            }
+            let binary = "\(tranformed) "
+            result.append(binary)
+        }
+        return result
     }
 }
 

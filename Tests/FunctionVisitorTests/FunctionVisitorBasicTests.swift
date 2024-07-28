@@ -71,3 +71,81 @@ class FunctionVisitorBasicTests: XCTestCase {
 
 // Conjunction(functionDecl.signature.parameterClause)
 
+/*Clause(predicate: {
+    Compound(.take) {
+        
+    }
+}) {
+    // subject
+    Compound {
+        
+    }
+}
+*/
+
+/*
+ Asynchronous public function named foo takes inputs name of type T, an indefinite number of values of type Int, and age of type Int with default value of 30 and returns output of String or nil, where T conforms to Numeric, or throws an error.
+ Breakdown of Main Clause:
+ Subject: "Asynchronous public function named foo"
+
+ Adjectives: "Asynchronous public" modifying "function"
+ Noun: "function"
+ Appositive: "named foo" renaming "function"
+ Verb: "takes" and "returns" and "throws" (compound verb structure with a coordination of actions the function performs)
+
+ Objects/Complements:
+
+ Direct Object 1: "inputs name of type T, an indefinite number of values of type Int, and age of type Int with default value of 30"
+ Compound Object: Broken down into:
+ "name of type T"
+ "an indefinite number of values of type Int"
+ "age of type Int with default value of 30"
+ Direct Object 2: "output of String or nil"
+ Phrases:
+
+ Prepositional Phrases:
+ "of type T" modifying "name"
+ "of type Int" modifying "values" and "age"
+ "with default value of 30" modifying "age of type Int"
+ "of String or nil" modifying "output"
+ Infinitive Phrase: The sentence does not contain a clear infinitive phrase, but the structure "takes inputs" and "returns output" implies an infinitive understanding of actions the function is capable of.
+ Breakdown of Subordinate Clause:
+ Conjunction: "where" introduces the subordinate clause that provides additional information about the type "T".
+
+ Subject: "T"
+
+ Verb: "conforms"
+
+ Object: "Numeric"
+
+ let sentence = Clause(
+     subject: .compound(
+         .noun(NounPhrase(adjectives: ["asynchronous", "public"], noun: "function", prepositionalPhrase: nil)),
+         .participle(ParticiplePhrase(participle: "named", complement: .noun(NounPhrase(adjectives: [], noun: "foo", prepositionalPhrase: nil))))
+     ),
+     predicate: .verb(VerbPhrase(verb: "takes", objects: [
+         .compound(
+             .prepositional(PrepositionalPhrase(preposition: "inputs", objectOfPreposition: .noun(NounPhrase(adjectives: [], noun: "name", prepositionalPhrase: .prepositional(PrepositionalPhrase(preposition: "of type", objectOfPreposition: .noun(NounPhrase(adjectives: [], noun: "T", prepositionalPhrase: nil)))))))),
+             .compound(
+                 .prepositional(PrepositionalPhrase(preposition: "an indefinite number of values", objectOfPreposition: .prepositional(PrepositionalPhrase(preposition: "of type", objectOfPreposition: .noun(NounPhrase(adjectives: [], noun: "Int", prepositionalPhrase: nil)))))),
+                 .prepositional(PrepositionalPhrase(preposition: "and age", objectOfPreposition: .compound(
+                     .prepositional(PrepositionalPhrase(preposition: "of type", objectOfPreposition: .noun(NounPhrase(adjectives: [], noun: "Int", prepositionalPhrase: nil)))),
+                     .prepositional(PrepositionalPhrase(preposition: "with default value", objectOfPreposition: .noun(NounPhrase(adjectives: [], noun: "30", prepositionalPhrase: nil))))
+                 )))
+             )
+         ),
+         .verb(VerbPhrase(verb: "returns", objects: [
+             .prepositional(PrepositionalPhrase(preposition: "output", objectOfPreposition: .compound(
+                 .noun(NounPhrase(adjectives: [], noun: "String", prepositionalPhrase: nil)),
+                 .noun(NounPhrase(adjectives: [], noun: "nil", prepositionalPhrase: nil))
+             )))
+         ])),
+         .participle(ParticiplePhrase(participle: "where T conforms to", complement: .noun(NounPhrase(adjectives: [], noun: "Numeric", prepositionalPhrase: nil)))),
+         .verb(VerbPhrase(verb: "or throws", objects: [
+             .noun(NounPhrase(adjectives: [], noun: "an error", prepositionalPhrase: nil))
+         ]))
+     ])),
+     conjunction: nil
+ )
+
+ */
