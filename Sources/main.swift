@@ -51,16 +51,6 @@ func add(_ lhs: Int, _ rhs: Int) -> Int {
     return lhs + rhs
 }
 
-//@_cdecl("summarize")
-//func summarize(_ source: String) -> [String] {
-//    let visitor = FunctionVisitor(viewMode: .fixedUp)
-//    let syntaxTree = Parser.parse(source: String(source))
-//    guard !syntaxTree.hasError else { return [] }
-//    visitor.walk(syntaxTree)
-//    
-//    return visitor.composers.values.map { $0.compose().text }
-//}
-
 @_cdecl("summarize")
 func summarize(_ source: String) -> UnsafeMutableRawPointer {
     let visitor = FunctionVisitor(viewMode: .fixedUp)
@@ -81,17 +71,6 @@ func summarize(_ source: String) -> UnsafeMutableRawPointer {
     let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: data.count)
     pointer.initialize(from: data, count: data.count)
     
-    return UnsafeMutableRawPointer(pointer)
-
-    
-  //  return source // visitor.functionDecl?.signature.parameterClause.parameters.count ?? 0
-}
-
-@_cdecl("generateData")
-public func generateData() -> UnsafeMutableRawPointer {
-    let data = [UInt8](repeating: 0, count: 1024)
-    let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: data.count)
-    pointer.initialize(from: data, count: data.count)
     return UnsafeMutableRawPointer(pointer)
 }
 
@@ -140,22 +119,6 @@ extension SwiftDecl {
     
     enum InputError: Error {
         case invalidSource
-    }
-}
-
-extension String {
-    func stringToBinary() -> String {
-        let st = self
-        var result = ""
-        for char in st.utf8 {
-            var tranformed = String(char, radix: 2)
-            while tranformed.count < 8 {
-                tranformed = "0" + tranformed
-            }
-            let binary = "\(tranformed) "
-            result.append(binary)
-        }
-        return result
     }
 }
 
